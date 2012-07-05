@@ -51,10 +51,19 @@ def get_music(user):
 
 
 class MainPage(Handler):
-	def get(self):
-		artists=list
-		self.response.out("front.html")
+	def render_front(self,tracks=""):
+		self.render("front.html",tracks=tracks)
 
+	def get(self):
+		tracks=memcache.get("select * from Music where video != ' '")
+
+                if tracks is None:
+                        tracks=list(db.GqlQuery("select * from Music where video != ' ' limit 10"))
+                        for i in tracks:
+                                i.artist=i.artist.replace("+","-")
+                                i.song=i.song.replace("+","-")
+                        memcache.set("select * from Music where video != ' '",tracks)
+                self.render_front(tracks)
 class BandPage(Handler):
 
 	def render_band(self,artist="",tracks=""):
@@ -74,10 +83,45 @@ class BandPage(Handler):
 		
 
 class TrackPage(Handler):
+	def render_track(self,name="",videos=""):
+		self.render("track.html",name=name,videos=videos)
 	def get(self,resource,append):
-		x=str(urllib2.unquote(resource))
-		y=str(urllib2.unquote(append))
-		self.render("track.html",r=y)
+		artist=str(urllib2.unquote(resource))[1:]
+		song=str(urllib2.unquote(append))[1:]
+		tracks=memcache.get("select * from Music where artist='%s'" % artist)
+		if tracks is None:
+                        tracks=list(db.GqlQuery("select * from Music where artist='%s'" % artist))
+                        for i in tracks:
+                                i.artist=i.artist.replace("+","-")
+                                i.song=i.song.replace("+","-")
+                        memcache.set("select * from Music where artist='%s'" % artist,tracks)
+		for track in tracks:
+			if track.artist==artist and track.song==song:
+				videos=track.video
+				break
+		self.render("track.html",name=artist+"/"+song,videos=videos)
+
+	def post(self,resource,append):
+                artist=str(urllib2.unquote(resource))[1:]
+                song=str(urllib2.unquote(append))[1:]
+		tracks=memcache.get("select * from Music where artist='%s'" % artist)
+		for track in tracks:
+                        if track.artist==artist and track.song==song:
+                                db.delete(track.key())
+				break
+		video=self.request.get("video")
+		m=Music(artist=artist,song=song,video=video)
+		m.put()
+		
+		tracks=list(db.GqlQuery("select * from Music where artist='%s'" % artist))
+		for i in tracks:
+	 		i.artist=i.artist.replace("+","-")
+        	        i.song=i.song.replace("+","-")
+                memcache.set("select * from Music where artist='%s'" % artist,tracks)
+
+
+		logging.error(artist)
+		self.redirect('/')
 
 
 app = webapp2.WSGIApplication([('/', MainPage),(PAGE_RE+PAGE_RE, TrackPage),(PAGE_RE, BandPage)], debug=True)

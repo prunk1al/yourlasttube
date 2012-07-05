@@ -11,7 +11,7 @@ from google.appengine.ext import db
 jinja_env = jinja2.Environment(autoescape=True,
     loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates')))
 
-PAGE_RE = r'(/(?:[a-zA-Z0-9_-\+]+/?)*)'
+PAGE_RE = r'(/(?:[a-zA-Z0-9_-]+/?)*)'
 
 class Handler(webapp2.RequestHandler):
     def write(self, *a, **kw):
@@ -174,8 +174,7 @@ class MainPage2(Handler):
 	 	youtube_query="http://www.youtube.com/embed/"+get_video(tracks.pop())+"?"
 	 	x=0
 	 	for i in tracks:
-	 		if x>=150:
-	 			break
+	 		
 	 		amv=i
 	 		video_id=get_video(amv)
 	 		logging.error("video_id=%s"%video_id)

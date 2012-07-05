@@ -1,1 +1,11 @@
-<{{r}}
+<h1>Our last tube</h1><br>
+<div class="tube">
+{%for track in tracks%}
+	<b><a href="{{artist}}/{{track.song}}">{{track.artist}} - {{track.song}}</a></b><br>
+	{%if track.video!=" "%}
+		<iframe id="ytplayer" width="320" height="199" src="http://www.youtube.com/embed/{{track.video}}"></iframe>
+  	{%endif%}
+  	<br><br>
+{%endfor%}
+</div>
+

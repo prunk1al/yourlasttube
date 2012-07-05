@@ -1,1 +1,12 @@
-{{r}}
+<h1>{{name}}</h1><br>
+<b>{{video}}</b>
+{%if videos!=" "%}
+	<iframe id="ytplayer" width="320" height="199" src="http://www.youtube.com/embed/{{videos}}"></iframe>
+{%else%}
+	<form method="post">
+		<b>No disponemos del video de la cancion</b><br>
+		Introduce la id de youtube: <input type="text"name="video"><br>
+		<input type="submit">	
+	
+	</form>
+{%endif%}
