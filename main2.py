@@ -29,6 +29,8 @@ class Music(db.Model):
 	artist=db.StringProperty(required=True)
 	song=db.StringProperty(required=True)
 	video=db.StringProperty(required=True)
+	created=db.DateProperty(auto_now_add=True)
+
 
 
 
@@ -49,6 +51,49 @@ def get_music(user):
 				lista.append(search)
 		return lista
 
+def crawl():
+	"""artist=list(db.GqlQuery("select artist from Music order by created desc limit 1"))
+
+	if artist is None:"""
+	artista='Epica'
+	tocrawl=[]
+	tocrawl.append(artista)
+	crawled=[]
+	i=1
+	for artist in tocrawl:
+		query="http://ws.audioscrobbler.com/2.0/?method=artist.gettoptracks&artist="+artist+"&api_key="+API_KEY
+		logging.error("alrtist=%s"%query)
+		page=urllib2.urlopen(query)
+		xml=minidom.parseString(page.read())
+		
+		tracks=xml.getElementsByTagName("track")
+		
+		"""for x in range(len(tracks)):
+			artista,song=tracks[x].childNodes[11].childNodes[0].nodeValue[25:].split('/_/')
+			m=Music(artist=artista, song=song, video=" ")
+			m.put()"""
+		
+
+		query="http://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&artist="+artist+"&api_key="+API_KEY
+		crawled.append(tocrawl.pop())
+		
+		logging.error("i=%s similar=%s"%(i,query))
+		i=i+1
+		page=urllib2.urlopen(query)
+		xml=minidom.parseString(page.read())
+		
+		names=xml.getElementsByTagName("url")
+		for x in names:
+			name=x.childNodes[0].nodeValue[18:]
+			logging.error("new=%s"%name)
+			if name not in tocrawl and name not in crawled:
+				logging.error("new=%s"%name)
+				tocrawl.append(name)
+		if len(crawled)>=1000:
+			break
+
+
+
 
 class MainPage(Handler):
 	def render_front(self,tracks=""):
@@ -56,14 +101,18 @@ class MainPage(Handler):
 
 	def get(self):
 		tracks=memcache.get("select * from Music where video != ' '")
+		if tracks is None:
+			tracks=list(db.GqlQuery("select * from Music where video != ' '"))
+			for i in tracks:
+				i.artist=i.artist.replace("+","-")
+				i.song=i.song.replace("+","-")
+			memcache.set("select * from Music where video != ' '",tracks)
+		random.shuffle(tracks)
+		for i in tracks:
+				logging.error("track=%s"% i.song)
+		self.render_front(tracks[0:9])
 
-                if tracks is None:
-                        tracks=list(db.GqlQuery("select * from Music where video != ' ' limit 10"))
-                        for i in tracks:
-                                i.artist=i.artist.replace("+","-")
-                                i.song=i.song.replace("+","-")
-                        memcache.set("select * from Music where video != ' '",tracks)
-                self.render_front(tracks)
+
 class BandPage(Handler):
 
 	def render_band(self,artist="",tracks=""):
@@ -123,5 +172,8 @@ class TrackPage(Handler):
 		logging.error(artist)
 		self.redirect('/')
 
+class Crawl(Handler):
+	def get(self):
+		crawl()
 
-app = webapp2.WSGIApplication([('/', MainPage),(PAGE_RE+PAGE_RE, TrackPage),(PAGE_RE, BandPage)], debug=True)
+app = webapp2.WSGIApplication([('/', MainPage),('/crawl', Crawl),(PAGE_RE+PAGE_RE, TrackPage),(PAGE_RE, BandPage)], debug=True)
