@@ -72,12 +72,21 @@ def get_music(user):
 				lista.append(search)
 		return lista
 
+def update_cache():
+	tracks=list(db.GqlQuery("select * from Music where video != ' '"))
+	for i in tracks:
+		i.artist=i.artist.replace("+","-")
+		i.song=i.song.replace("+","-")
+	memcache.set("select * from Music where video != ' '",tracks)
+
+	
+
 def crawl(band=""):
 
 	if band=="":
 		x=list(db.GqlQuery("select artist from Music order by created "))
 		
-		if band == []:
+		if x == []:
 			band='Epica'
 		else:
 			band=x[0].artist
@@ -104,6 +113,7 @@ def crawl(band=""):
 					video=get_video("%s/%s"%(artista,song))
 					m=Music(artist=artista, song=song, video=video)
 					m.put()
+					update_cache()
 		
 
 		query="http://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&artist="+artist+"&api_key="+API_KEY
@@ -119,7 +129,7 @@ def crawl(band=""):
 			if name not in tocrawl and name not in crawled:
 				tocrawl.append(name)
 
-		if i=5:
+		if i==5:
 			break
 		i=i+1
 
