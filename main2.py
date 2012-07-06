@@ -6,6 +6,7 @@ import jinja2
 import logging
 import random
 import string
+import time
 from google.appengine.api import memcache
 from google.appengine.ext import db
 
@@ -29,12 +30,32 @@ class Music(db.Model):
 	artist=db.StringProperty(required=True)
 	song=db.StringProperty(required=True)
 	video=db.StringProperty(required=True)
-	created=db.DateProperty(auto_now_add=True)
+	created=db.DateTimeProperty(auto_now_add=True)
 
 
 
 
 API_KEY= '51293239750eea5095511e23b3107e31'
+def get_video(search):
+	logging.error("search=%s"%search)
+	artist,song=search.split('/')
+	data=memcache.get(search)
+	if data is not None:
+		return data
+	else:
+
+		query='http://gdata.youtube.com/feeds/api/videos?q="'+artist+'+'+song+'+official+video"+-mashup+-lyrics+-collaboration+-pirates+-cover+-making+-fanmade&max-results=1&v=2&format=5'
+		logging.error("%s"%query)
+		page=urllib2.urlopen(query)
+		xml=minidom.parseString(page.read())
+		if  xml.getElementsByTagName("yt:videoid")!= []:
+			data=xml.getElementsByTagName("yt:videoid")[0].childNodes[0].nodeValue
+		else:
+			data=" "
+		memcache.set(search,data)
+		logging.error("search=%s"%search)
+		logging.error("data=%s"%data)
+		return data
 
 def get_music(user):
 		
@@ -51,48 +72,56 @@ def get_music(user):
 				lista.append(search)
 		return lista
 
-def crawl():
-	"""artist=list(db.GqlQuery("select artist from Music order by created desc limit 1"))
+def crawl(band=""):
 
-	if artist is None:"""
-	artista='Epica'
+	if band=="":
+		x=list(db.GqlQuery("select artist from Music order by created "))
+		
+		if band == []:
+			band='Epica'
+		else:
+			band=x[0].artist
+
 	tocrawl=[]
-	tocrawl.append(artista)
+	tocrawl.append(band)
 	crawled=[]
-	i=1
+	for groups in x:
+		crawled.append(groups.artist)
+	i=0
 	for artist in tocrawl:
-		query="http://ws.audioscrobbler.com/2.0/?method=artist.gettoptracks&artist="+artist+"&api_key="+API_KEY
-		logging.error("alrtist=%s"%query)
-		page=urllib2.urlopen(query)
-		xml=minidom.parseString(page.read())
+		if artist not in crawled:
+			i=i-1
+			query="http://ws.audioscrobbler.com/2.0/?method=artist.gettoptracks&artist="+artist+"&api_key="+API_KEY+"&limit=10"
+			logging.error("alrtist=%s"%query)
+			page=urllib2.urlopen(query)
+			xml=minidom.parseString(page.read())
 		
-		tracks=xml.getElementsByTagName("track")
-		
-		"""for x in range(len(tracks)):
-			artista,song=tracks[x].childNodes[11].childNodes[0].nodeValue[25:].split('/_/')
-			m=Music(artist=artista, song=song, video=" ")
-			m.put()"""
+			tracks=xml.getElementsByTagName("track")
+			for x in range(len(tracks)):
+				artista,song=tracks[x].childNodes[11].childNodes[0].nodeValue[25:].split('/_/')
+			
+				if artista[0]!='+':
+					video=get_video("%s/%s"%(artista,song))
+					m=Music(artist=artista, song=song, video=video)
+					m.put()
 		
 
 		query="http://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&artist="+artist+"&api_key="+API_KEY
+		logging.error(query)
 		crawled.append(tocrawl.pop())
 		
-		logging.error("i=%s similar=%s"%(i,query))
-		i=i+1
 		page=urllib2.urlopen(query)
 		xml=minidom.parseString(page.read())
-		
 		names=xml.getElementsByTagName("url")
 		for x in names:
 			name=x.childNodes[0].nodeValue[18:]
-			logging.error("new=%s"%name)
+			logging.error(name)
 			if name not in tocrawl and name not in crawled:
-				logging.error("new=%s"%name)
 				tocrawl.append(name)
-		if len(crawled)>=1000:
+
+		if i=5:
 			break
-
-
+		i=i+1
 
 
 class MainPage(Handler):

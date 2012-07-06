@@ -1,7 +1,7 @@
-<h1>Our last tube</h1><br>
+<h1>Our last tube</h1><input type="text" name artist><input type=submit><br>
 <div class="tube">
 {%for track in tracks%}
-	<b><a href="{{artist}}/{{track.song}}">{{track.artist}} - {{track.song}}</a></b><br>
+	<b><a href="{{track.artist}}/{{track.song}}">{{track.artist}} - {{track.song}}</a></b><br>
 	{%if track.video!=" "%}
 		<iframe id="ytplayer" width="320" height="199" src="http://www.youtube.com/embed/{{track.video}}"></iframe>
   	{%endif%}
