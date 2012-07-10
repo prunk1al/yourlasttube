@@ -7,6 +7,7 @@ import logging
 import random
 import string
 import time
+import cgi
 from google.appengine.api import memcache
 from google.appengine.ext import db
 
@@ -30,6 +31,8 @@ class Music(db.Model):
 	artist=db.StringProperty(required=True)
 	song=db.StringProperty(required=True)
 	video=db.StringProperty(required=True)
+	genre=db.StringProperty(required=True)
+	album=db.StringProperty(required=True)
 	created=db.DateTimeProperty(auto_now_add=True)
 
 
@@ -37,8 +40,8 @@ class Music(db.Model):
 
 API_KEY= '51293239750eea5095511e23b3107e31'
 def get_video(search):
-	logging.error("search=%s"%search)
-	artist,song=search.split('/')
+	
+	artist,song=search[0],search[1]
 	data=memcache.get(search)
 	if data is not None:
 		return data
@@ -53,12 +56,10 @@ def get_video(search):
 		else:
 			data=" "
 		memcache.set(search,data)
-		logging.error("search=%s"%search)
-		logging.error("data=%s"%data)
 		return data
 
 def get_music(user):
-		
+
 		query="http://ws.audioscrobbler.com/2.0/?method=user.gettoptracks&user="+user+"&api_key="+API_KEY+"&limit=100"
 		logging.error("%s"%query)
 		page=urllib2.urlopen(query)
@@ -72,14 +73,60 @@ def get_music(user):
 				lista.append(search)
 		return lista
 
-def update_cache():
-	tracks=list(db.GqlQuery("select * from Music where video != ' '"))
-	for i in tracks:
-		i.artist=i.artist.replace("+","-")
-		i.song=i.song.replace("+","-")
-	memcache.set("select * from Music where video != ' '",tracks)
-
+def update_cache(key="all",artist=""):
+	if key=="all" or key=="videos": 
+		videos=list(db.GqlQuery("select * from Music where video != ' '"))
+		for i in videos:
+			i.artist=i.artist.replace("+","-")
+			i.song=i.song.replace("+","-")
+		memcache.set("select * from Music where video != ' '",videos)
 	
+	if key=="all" or key=="all_artist":
+		artist=list(db.GqlQuery("select * from Music"))
+		for i in artist:
+			i.artist=i.artist.replace("+","-")
+			i.song=i.song.replace("+","-")
+		memcache.set("select * from Music",artist)
+
+	if key=="all" or key=="artist":
+		tracks=list(db.GqlQuery("select * from Music where artist='%s'" % artist))
+		for i in tracks:
+			i.artist=i.artist.replace("+","-")
+			i.song=i.song.replace("+","-")
+		memcache.set("select * from Music where artist='%s'" % artist,tracks)
+
+
+def artist_cache(artist):
+
+	tracks=memcache.get("select * from Music where artist='%s'" % artist)
+	
+	if tracks is None:
+		tracks=list(db.GqlQuery(u"select * from Music where artist='%s'" % artist))
+		if tracks == []:
+			return []
+
+		for i in tracks:
+			i.artist=i.artist.replace("+","-")
+			i.song=i.song.replace("+","-")
+		memcache.set("select * from Music where artist='%s'" % artist,tracks)
+	return tracks
+
+def get_artists():
+	artists=memcache.get("artists")
+	if artists==None:
+		artists={}
+
+	return artists
+
+def replace_space(text):
+	s=""
+	for c in text:
+		if c==" ":
+			s=s+"+"
+		else:
+			s=s+c
+	return s
+
 
 def crawl(band=""):
 
@@ -91,33 +138,88 @@ def crawl(band=""):
 		else:
 			band=x[0].artist
 
+
 	tocrawl=[]
 	tocrawl.append(band)
 	crawled=[]
-	for groups in x:
-		crawled.append(groups.artist)
+
+	
 	i=0
 	for artist in tocrawl:
+		logging.error(artist)
+		artist=artist.replace("'","")
+		if artist_cache(cgi.escape(artist)) != []:
+			crawled.append(artist)
 		if artist not in crawled:
-			i=i-1
-			query="http://ws.audioscrobbler.com/2.0/?method=artist.gettoptracks&artist="+artist+"&api_key="+API_KEY+"&limit=10"
-			logging.error("alrtist=%s"%query)
+
+
+				
+			
+			artists={}
+			artists["artist"]=artist
+			artists["albums"]={}
+			artists["genre"]=""
+
+			artist_list=memcache.get("artist_list")
+			if artist_list is None:
+				artist_list=[]
+			artist_list.append(artist)
+			memcache.set("artist_list",artist_list)
+
+			logging.error("%s crawling artist %s"%(i,artist))
+
+
+			query="http://ws.audioscrobbler.com/2.0/?method=artist.gettoptags&artist="+artist+"&api_key="+API_KEY
 			page=urllib2.urlopen(query)
 			xml=minidom.parseString(page.read())
-		
-			tracks=xml.getElementsByTagName("track")
-			for x in range(len(tracks)):
-				artista,song=tracks[x].childNodes[11].childNodes[0].nodeValue[25:].split('/_/')
+			g=xml.getElementsByTagName("name")
+			genre=g[0].childNodes[0].nodeValue
+			artists["genre"]=genre
+
+			logging.error("getting albums")
+			query="http://ws.audioscrobbler.com/2.0/?method=artist.gettopalbums&artist="+artist+"&api_key="+API_KEY
+			page=urllib2.urlopen(query)
+			xml=minidom.parseString(page.read())
+			albums=xml.getElementsByTagName("album")
 			
-				if artista[0]!='+':
-					video=get_video("%s/%s"%(artista,song))
-					m=Music(artist=artista, song=song, video=video)
-					m.put()
-					update_cache()
+			
+			for album in albums:
+				name=album.childNodes[1].childNodes[0].nodeValue
+				artists["albums"][name]=[]
 		
 
+
+			for album in artists["albums"].iterkeys():
+				
+
+				artist=cgi.escape(artist,quote=True)
+				
+				query="http://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist="+artist+"&album="+replace_space(cgi.escape(album,quote=True))+"&api_key="+API_KEY+"&limit=5"
+				
+				logging.error(query)
+				try:
+					page=urllib2.urlopen(query)
+				except:
+					break
+				xml=minidom.parseString(page.read())
+				tracks=xml.getElementsByTagName("track")
+
+				for track in tracks:
+					song=cgi.escape(track.childNodes[1].childNodes[0].nodeValue)
+					logging.error(song)
+					try:
+						video=str(get_video((artist,replace_space(cgi.escape(song,quote=True)))))
+						artists["albums"][album].append((song,video))
+						m=Music(artist=artist, song=song, video=video,genre=genre, album=album)
+						m.put()
+						memcache.set(artist,artists)
+					except:
+						pass
+
+
+			
 		query="http://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&artist="+artist+"&api_key="+API_KEY
-		logging.error(query)
+
 		crawled.append(tocrawl.pop())
 		
 		page=urllib2.urlopen(query)
@@ -125,13 +227,23 @@ def crawl(band=""):
 		names=xml.getElementsByTagName("url")
 		for x in names:
 			name=x.childNodes[0].nodeValue[18:]
-			logging.error(name)
+
 			if name not in tocrawl and name not in crawled:
 				tocrawl.append(name)
 
-		if i==5:
+
+
+		if i==10:
 			break
 		i=i+1
+
+
+
+
+def search(artist):
+	if artist_cache(artist)==[]:
+
+		crawl(artist)
 
 
 class MainPage(Handler):
@@ -149,25 +261,35 @@ class MainPage(Handler):
 		random.shuffle(tracks)
 		for i in tracks:
 				logging.error("track=%s"% i.song)
-		self.render_front(tracks[0:9])
+		self.render_front(tracks[0:2])
+
+	def post(self):
+		artist=self.request.get('artist')
+		artist=artist.replace(" ","-")
+		
+		search(artist)
+		self.redirect("/"+artist)
+
 
 
 class BandPage(Handler):
 
-	def render_band(self,artist="",tracks=""):
-		self.render("band.html",artist=artist,tracks=tracks)
+	def render_band(self,artist="",albums=""):
+		self.render("band.html",artist=artist,albums=albums)
 
 	def get(self,resource):
 		artist=str(urllib2.unquote(resource))[1:]
-		tracks=memcache.get("select * from Music where artist='%s'" % artist)
+		artist=artist.replace("-","+")
 
-		if tracks is None:
-			tracks=list(db.GqlQuery("select * from Music where artist='%s'" % artist))
-			for i in tracks:
-				i.artist=i.artist.replace("+","-")
-				i.song=i.song.replace("+","-")
-			memcache.set("select * from Music where artist='%s'" % artist,tracks)
-		self.render_band(artist,tracks)
+		artists=memcache.get(artist)
+		albums=[]
+		albums2=[]
+		for album in artists["albums"].iterkeys():
+			albums.append(album)
+			albums2.append(album.replace(" ","-"))
+
+		artist=artist.replace("+","-")
+		self.render_band(artist,albums)
 		
 
 class TrackPage(Handler):
@@ -176,6 +298,8 @@ class TrackPage(Handler):
 	def get(self,resource,append):
 		artist=str(urllib2.unquote(resource))[1:]
 		song=str(urllib2.unquote(append))[1:]
+		
+
 		tracks=memcache.get("select * from Music where artist='%s'" % artist)
 		if tracks is None:
                         tracks=list(db.GqlQuery("select * from Music where artist='%s'" % artist))
@@ -190,29 +314,160 @@ class TrackPage(Handler):
 		self.render("track.html",name=artist+"/"+song,videos=videos)
 
 	def post(self,resource,append):
-                artist=str(urllib2.unquote(resource))[1:]
-                song=str(urllib2.unquote(append))[1:]
+		artist=str(urllib2.unquote(resource))[1:]
+		song=str(urllib2.unquote(append))[1:]
 		tracks=memcache.get("select * from Music where artist='%s'" % artist)
 		for track in tracks:
-                        if track.artist==artist and track.song==song:
-                                db.delete(track.key())
+			if track.artist==artist and track.song==song:
+				genre=track.genre
+				logging.error(track.key)
+				db.delete(track.key())
 				break
 		video=self.request.get("video")
-		m=Music(artist=artist,song=song,video=video)
+		m=Music(artist=artist,song=song,video=video,genre=genre)
 		m.put()
 		
-		tracks=list(db.GqlQuery("select * from Music where artist='%s'" % artist))
-		for i in tracks:
-	 		i.artist=i.artist.replace("+","-")
-        	        i.song=i.song.replace("+","-")
-                memcache.set("select * from Music where artist='%s'" % artist,tracks)
-
+		update_cache("artist",artist)
 
 		logging.error(artist)
 		self.redirect('/')
+
+class AlbumPage(Handler):
+	def render_album(self,artist="",album="",tracks=""):
+		self.render("album.html",artist=artist,album=album,tracks=tracks)
+
+	def get(self,resource,append):
+		artist=str(urllib2.unquote(resource))[1:]
+		album=str(urllib2.unquote(append))[1:]
+
+
+		artist=artist.replace("-","+")
+		album=album.replace("-"," ")
+		artists=memcache.get(artist)
+
+		logging.error(cgi.escape(album))
+
+		tracks=[]
+		for track in artists["albums"][album]:
+			tracks.append(track)
+
+		self.render_album(artist=artist,album=album,tracks=tracks)
+		
+
+
+
+
+
 
 class Crawl(Handler):
 	def get(self):
 		crawl()
 
-app = webapp2.WSGIApplication([('/', MainPage),('/crawl', Crawl),(PAGE_RE+PAGE_RE, TrackPage),(PAGE_RE, BandPage)], debug=True)
+
+
+class RandomPage(Handler):
+	def render_random(self,lista=""):
+		first=lista.pop()
+		playlist=""
+		for i in lista:
+			playlist=playlist+i+","
+		logging.error(first)
+		logging.error(playlist)
+		url="http://www.youtube.com/embed/"+first+"?playlist="+playlist
+		self.render("random.html", url=url)
+
+		self.redirect(str(url))
+	def get(self):
+		videos=memcache.get("select * from Music where video != ' '")
+		if videos is None:
+			update_cache("videos")
+			videos=memcache.get("select * from Music where video != ' '")
+
+		tracks=[]
+		for i in videos:
+			tracks.append(i.video)
+		random.shuffle(tracks)
+		self.render_random(tracks[0:150])
+
+class ArtistsPage(Handler):
+	def render_artist(self,artist=""):
+		self.render("artist.html",artist=artist)
+
+	def get(self):
+
+				
+		artist=memcache.get("artist_list")
+		self.render_artist(sorted(artist))
+
+	def post(self):
+		artist=self.request.get('artist')
+		artist=artist.replace(" ","-")
+		
+		search(artist)
+		self.redirect("/"+artist)
+
+
+class GenresPage(Handler):
+	def render_genre(self,artist=""):
+		self.render("artist.html",artist=artist)
+
+	def get(self):
+		artist_list=memcache.get("artist_list")
+
+		genre=[]
+		for i in artist_list:
+			artist=memcache.get(i)
+			if artist["genre"] not in genre:
+				genre.append(artist["genre"])
+		self.render_genre(sorted(genre))
+
+
+class Clean(Handler):
+	def get(self):
+		artist=list(db.GqlQuery("select * from Music"))
+		for i in artist:
+			db.delete(i.key())
+
+class GenrePage(Handler):
+	def get(self):
+		a=0
+
+class Fill(Handler):
+	def get(self):
+		artist_list=[]
+		artists={}
+		
+		if artists is {}:
+			songs=list(db.GqlQuery("select * from Music"))
+
+			for song in songs:
+
+				artist=song.artist
+				album=song.album
+
+				logging.error("song %s"%artist)
+
+				if artist not in artist_list:
+					artist_list.append(artist)
+					memcache.set("artist_list",artist_list)
+
+				logging.error("song %s"%song.artist)
+				if song.artist not in artists.keys():
+					
+					artists["artist"]=artist
+					artists["albums"]={}
+					artists["genre"]=""
+
+				if song.album not in artists["album"].keys():
+					artists["albums"][album]=[]
+				if song.genre not in artist["genre"].keys():
+					artist["genre"]=song.genre
+
+				artists["albums"][album].append((song.song,song.video))
+				logging.error(artists)
+				memcache.set(artist,artists)
+
+
+
+
+app = webapp2.WSGIApplication([('/', MainPage),('/fillmemcache',Fill),('/Clean', Clean),('/crawl', Crawl),('/genres',GenresPage),("/genres"+PAGE_RE,GenrePage),('/artists',ArtistsPage),('/random',RandomPage),(PAGE_RE+PAGE_RE+PAGE_RE, TrackPage),(PAGE_RE+PAGE_RE, AlbumPage),(PAGE_RE, BandPage)], debug=True)

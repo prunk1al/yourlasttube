@@ -1,0 +1,11 @@
+<h1>{{artist}}</h1><br>
+<h2>{{album}}</h2><br>
+
+{%for track in tracks%}
+	<b><a href="{{artist}}/{{album}}/{{track[0]}}">{{track[0]}}</a></b><br>
+	{%if track[1]!=" "%}
+		<iframe id="ytplayer" width="320" height="199" src="http://www.youtube.com/embed/{{track[1]}}"></iframe>
+  	{%endif%}
+  	<br><br>
+{%endfor%}
+

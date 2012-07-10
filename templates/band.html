@@ -1,10 +1,7 @@
 <h1>{{artist}}</h1><br>
 
-{%for track in tracks%}
-	<b><a href="{{artist}}/{{track.song}}">{{track.song}}</a></b><br>
-	{%if track.video!=" "%}
-		<iframe id="ytplayer" width="320" height="199" src="http://www.youtube.com/embed/{{track.video}}"></iframe>
-  	{%endif%}
-  	<br><br>
+{%for album in albums%}
+	<b><a href="{{artist}}/{{album.replace(' ','-')}}">{{album}}</a></b><br>
+
 {%endfor%}
 
