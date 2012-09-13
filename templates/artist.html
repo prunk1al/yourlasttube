@@ -1,7 +1,10 @@
 <h1>Our Artist database</h1><form method="post"><input type="text" name="artist"><input type=submit></form><br>
 
 {%for i in artist%}
-	<b><a href="{{i}}">{{i}}</a></b><br>
+	<b><a href="artist?mbid={{i.mbid}}">{{i.artist}}</a></b> 
+	{%if i.dis != " " %}
+		{{i.disambiguation}} 
+	{%endif%}<br>
 {%endfor%}
 </div>
 

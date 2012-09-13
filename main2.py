@@ -8,6 +8,7 @@ import random
 import string
 import time
 import cgi
+import json
 from google.appengine.api import memcache
 from google.appengine.ext import db
 
@@ -35,6 +36,8 @@ class Music(db.Model):
 	album=db.StringProperty(required=True)
 	created=db.DateTimeProperty(auto_now_add=True)
 
+class Artist(db.Model):
+	artist=db.StringProperty(required=True)
 
 
 
@@ -48,7 +51,6 @@ def get_video(search):
 	else:
 
 		query='http://gdata.youtube.com/feeds/api/videos?q="'+artist+'+'+song+'+official+video"+-mashup+-lyrics+-collaboration+-pirates+-cover+-making+-fanmade&max-results=1&v=2&format=5'
-		logging.error("%s"%query)
 		page=urllib2.urlopen(query)
 		xml=minidom.parseString(page.read())
 		if  xml.getElementsByTagName("yt:videoid")!= []:
@@ -57,21 +59,6 @@ def get_video(search):
 			data=" "
 		memcache.set(search,data)
 		return data
-
-def get_music(user):
-
-		query="http://ws.audioscrobbler.com/2.0/?method=user.gettoptracks&user="+user+"&api_key="+API_KEY+"&limit=100"
-		logging.error("%s"%query)
-		page=urllib2.urlopen(query)
-		xml=minidom.parseString(page.read())
-		urls=xml.getElementsByTagName("url")
-		lista=[]
-		for x in range(len(urls)):
-			if x%2==0:
-				artist,song=urls[x].childNodes[0].nodeValue[25:].split('/_/')
-				search= [artist,song]
-				lista.append(search)
-		return lista
 
 def update_cache(key="all",artist=""):
 	if key=="all" or key=="videos": 
@@ -130,15 +117,7 @@ def replace_space(text):
 
 def crawl(band=""):
 
-	if band=="":
-		x=list(db.GqlQuery("select artist from Music order by created "))
-		
-		if x == []:
-			band='Epica'
-		else:
-			band=x[0].artist
-
-
+	
 	tocrawl=[]
 	tocrawl.append(band)
 	crawled=[]
@@ -182,10 +161,13 @@ def crawl(band=""):
 			xml=minidom.parseString(page.read())
 			albums=xml.getElementsByTagName("album")
 			
-			
+			if len(albums)>=5:
+				i=2
+
 			for album in albums:
 				name=album.childNodes[1].childNodes[0].nodeValue
 				artists["albums"][name]=[]
+
 		
 
 
@@ -233,17 +215,62 @@ def crawl(band=""):
 
 
 
-		if i==10:
+		if i>=2:
 			break
 		i=i+1
 
 
 
 
-def search(artist):
-	if artist_cache(artist)==[]:
+def search_artist(artist):
+	if list(db.GqlQuery("select * from Artist"))==[]:
+		logging.error("not in Artist")
+		crawl_artist(artist)
 
-		crawl(artist)
+def crawl_artist(artist):
+	tocrawl=memcache.get("tocrawl_artist")
+	crawled=memcache.get("crawled_artist")
+	logging.error("crawling artist")
+
+	if tocrawl is None:
+		tocrawl=[]
+		tocrawl.append(artist)
+	if crawled is None:
+		crawled=[]
+
+	if tocrawl is not None:
+		if artist in tocrawl:
+			x=tocrawl.index(artist)
+			next_crawl=tocrawl.pop(x)
+
+		if artist in crawled:
+			next_crawl=tocrawl.pop()
+		
+		else:
+			next_crawl=artist
+
+		query="http://api.deezer.com/2.0/search/artist?q="+next_crawl+"&output=xml&nb_items=1"
+		logging.error(query)
+		page=urllib2.urlopen(query)
+		xml=minidom.parseString(page.read())
+		names=xml.getElementsByTagName("url")
+
+		crawled.append(next_crawl)
+		for x in names:
+			name=x.childNodes[0].nodeValue[18:]
+
+			if name not in tocrawl and name not in crawled:
+				tocrawl.append(name)
+		
+		a=Artist(artist=next_crawl)
+		a.put()
+
+		b=memcache.set("tocrawl_artist",tocrawl)
+		c=memcache.set("crawled_artist",crawled)
+	
+
+
+
 
 
 class MainPage(Handler):
@@ -267,7 +294,8 @@ class MainPage(Handler):
 		artist=self.request.get('artist')
 		artist=artist.replace(" ","-")
 		
-		search(artist)
+		search_artist(artist)
+
 		self.redirect("/"+artist)
 
 
@@ -426,6 +454,7 @@ class Clean(Handler):
 	def get(self):
 		artist=list(db.GqlQuery("select * from Music"))
 		for i in artist:
+			logging.error("a")
 			db.delete(i.key())
 
 class GenrePage(Handler):
@@ -466,7 +495,6 @@ class Fill(Handler):
 				artists["albums"][album].append((song.song,song.video))
 				logging.error(artists)
 				memcache.set(artist,artists)
-
 
 
 

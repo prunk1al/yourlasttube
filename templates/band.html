@@ -1,7 +1,61 @@
-<h1>{{artist}}</h1><br>
+<html>
+<style TYPE="text/css"> 
+<!--
+body
+{
+background-image:url('{{bg}}');
+background-color:#cccccc;
+} 
+#wrap { 
+  width: 900px; 
+  margin: 0 auto; 
+}
+#j{
+	text-align: justify;
+}
+#footer {
+   position:absolute;
+   bottom:0;
+   width:900px;
+}
 
+
+
+-->
+</style>
+
+
+
+<body>
+<div id=wrap>
+<h1><center><a href="playlist?tipo=artist&mbid={{artist_mbid}}"><img  src="{{image}}" width=300><center></h1><br>
+<div id=footer>
+
+	
+	<center>	
 {%for album in albums%}
-	<b><a href="{{artist}}/{{album.replace(' ','-')}}">{{album}}</a></b><br>
-
+	
+	<b><a href="album?mbid={{album[0]}}"><img src="{{album[2]}}" alt="{{album[1]}}" width=100></a></b>
+	
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 {%endfor%}
+
+</center>
+
+<center>
+<h3>Artistas Similares:<h3><br><br>
+	<table aling=center>
+	
+		<tr>
+	{%for s in similar%}
+
+		<td align=center><a href="artist?mbid={{s[0].mbid}}"><img src="{{s[1]}}" alt="{{s[0].artist}}" width=200></a></td>
+	{%endfor%}
+		</tr>
+	</table>
+</center>
+</div>
+</div>
+</body>
+
 

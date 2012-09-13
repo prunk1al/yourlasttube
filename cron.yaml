@@ -1,4 +1,1 @@
 cron:
-- description: daily summary job
-  url: /crawl
-  schedule: every 24 hours

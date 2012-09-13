@@ -1,11 +1,31 @@
+<html>
+<style TYPE="text/css"> 
+<!--
+body
+{
+background-image:url('{{bg}}');
+background-color:#cccccc;
+} 
+#wrap { 
+  width: 900px; 
+  margin: 0 auto; 
+}
+
+-->
+</style>
+
+<body>
 <h1>{{artist}}</h1><br>
-<h2>{{album}}</h2><br>
+<h2><a href="playlist?tipo=album&mbid={{album_id}}">{{album}}</a></h2><br>
 
 {%for track in tracks%}
-	<b><a href="{{artist}}/{{album}}/{{track[0]}}">{{track[0]}}</a></b><br>
-	{%if track[1]!=" "%}
-		<iframe id="ytplayer" width="320" height="199" src="http://www.youtube.com/embed/{{track[1]}}"></iframe>
+	<b><a href="track?mbid={{track[1][0]}}">{{track[1][1]}}</a></b><br>
+	{%if track[0	]!=" "%}
+		<div class="lyte" id="{{track[0]}}" style="width:480;height:385;"><noscript><a href="http://youtu.be/{{track[0]}}">Watch on YouTube</a></noscript>
+		<script>(function(){d=document;if(!document.getElementById('lytescr')){lyte=d.createElement('script');lyte.async=true;lyte.id="lytescr";lyte.src="http://futtta.be/lyte/lyte.js";d.getElementsByTagName('head')[0].appendChild(lyte)}})();</script></div>
+		
   	{%endif%}
   	<br><br>
 {%endfor%}
 
+<body>

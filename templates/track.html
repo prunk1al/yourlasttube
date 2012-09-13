@@ -1,12 +1,57 @@
-<h1>{{name}}</h1><br>
+<html>
+<style TYPE="text/css"> 
+<!--
+body
+{
+#bg {
+	position:fixed; 
+	top:-50%; 
+	left:-50%; 
+	width:200%; 
+	height:200%;
+}
+#bg img {
+	position:absolute; 
+	top:0; 
+	left:0; 
+	right:0; 
+	bottom:0; 
+	margin:auto; 
+	min-width:50%;
+	min-height:50%;
+}
+} 
+
+
+-->
+</style>
+
+<body>
+
+<div id="bg">
+	<img src="`{{bg}}" alt="">
+</div>
+
+<h1>{{artist}} / {{song}}</h1><br>
 <b>{{video}}</b>
+<form method="post">
 {%if videos!=" "%}
-	<iframe id="ytplayer" width="320" height="199" src="http://www.youtube.com/embed/{{videos}}"></iframe>
+
+	<div class="lyte" id="{{videos}}" style="width:48;height:38;"><noscript><a href="http://youtu.be/{{videos}}">Watch on YouTube</a></noscript>
+<script>(function(){d=document;if(!document.getElementById('lytescr')){lyte=d.createElement('script');lyte.async=true;lyte.id="lytescr";lyte.src="http://futtta.be/lyte/lyte.js";d.getElementsByTagName('head')[0].appendChild(lyte)}})();</script></div>
+
+	
+	<b>Video erroneo???</b><br>
 {%else%}
-	<form method="post">
+	
 		<b>No disponemos del video de la cancion</b><br>
-		Introduce la id de youtube: <input type="text"name="video"><br>
+		
+{%endif%}
+Introduce la id de youtube: <input type="text"name="video"><br>
+	<input type="hidden" name="mbid" value="{{mbid}}">
+	<input type="hidden" name="artist" value="{{artist}}">
+	<input type="hidden" name="song" value="{{song}}">
 		<input type="submit">	
 	
-	</form>
-{%endif%}
+</form>
+</body>

@@ -1,5 +1,5 @@
 <h1>Our last tube</h1><form method="post"><input type="text" name="artist"><input type=submit></form><br>
-<a href="/artists">list artists</a> <a href="/genres">list genres</a>
+<a href="artists">list artists</a> <a href="/genres">list genres</a>
 <div class="tube">
 {%for track in tracks%}
 	<b><a href="{{track.artist}}/{{track.song}}">{{track.artist}} - {{track.song}}</a></b><br>
