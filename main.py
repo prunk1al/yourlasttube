@@ -134,11 +134,12 @@ class BandPage(Handler):
     def get(self):
         mbid=self.request.get('mbid')
         artist_mbid=mbid
+        #tools.main(artist_mbid)   #profiling
+
         artist=tools.get_artist_mb(mbid)
         logging.error(artist)
         
         album_mbid=tools.get_albums_mb(mbid)
-        logging.error("ALBUMS: %s"%album_mbid)
         images=[]
 
 
@@ -146,15 +147,17 @@ class BandPage(Handler):
         similar=tools.get_similar(artist_mbid)
         similar_mbid=[]
         for s in similar:
-            mbid=tools.get_data(s,d=False,I=False)
-            if len(mbid)==1:
-                similar_mbid.append((mbid[0],tools.get_image(mbid[0].mbid,s,'artist')))
+            logging.error(s)
+            mbid=s[1]
+            logo=tools.get_image(mbid,s[0],'artist')
+            logging.error(s[0])
+            similar_mbid.append((mbid,logo))
             
                 
         image=tools.get_image(artist_mbid,artist,'artist')
         
         bg=tools.get_image(artist_mbid,artist,'bg')
-        logging.error(similar)
+
         self.render_band(artist=artist,albums=album_mbid,similar=similar_mbid, artist_mbid=artist_mbid, image=image,bg=bg)
 
       
