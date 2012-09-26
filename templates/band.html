@@ -5,6 +5,7 @@ body
 {
 background-image:url('{{bg}}');
 background-color:#cccccc;
+background-position: fixed;
 } 
 #wrap { 
   width: 900px; 
@@ -48,8 +49,9 @@ background-color:#cccccc;
 	
 		<tr>
 	{%for s in similar%}
-
-		<td align=center><a href="artist?mbid={{s[0].mbid}}"><img src="{{s[1]}}" alt="{{s[0].artist}}" width=200></a></td>
+		{%if s[1]!=[]%}
+			<td align=center><a href="artist?mbid={{s[0]}}"><img src="{{s[1]}}"  width=200></a></td>
+		{%endif%}
 	{%endfor%}
 		</tr>
 	</table>
