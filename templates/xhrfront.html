@@ -1,0 +1,112 @@
+<style TYPE="text/css"> 
+<!--
+body{
+  background-color: #000000
+}
+
+#centered{ width: 425px; margin: 2em auto 0 auto; text-align: left; }
+#wrap { 
+  width: 900px; 
+  margin: 0 auto; 
+}
+
+
+
+#title{
+  position: relative;
+}
+
+-->
+</style>
+<html>
+<head>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24611951-5']);
+  _gaq.push(['_setDomainName', 'yourlastube.com']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 'stats.g.doubleclick.net/dc.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+<link type="text/css" rel="stylesheet" media="screen, projection" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/black-tie/jquery-ui.css" />
+<link type="text/css" rel="stylesheet" media="screen, projection" href="js/css/youtube-player.css" />
+
+
+
+<meta name="description" content="Best music Videos">
+<meta name="keywords" content="music videos,youtube music, music tube, music video downloads,youtube free music videos,free youtube music videos,free music videos on youtube,free music videos at youtube,children s music videos youtube,utube music videos">
+</head>
+
+
+<body>
+<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<!-- jYoutube playlist -->
+<script type="text/javascript" src="js/test.js"></script>
+<script src="js/jQuery.tubeplayer.min.js"></script>
+
+  <!-- END jYoutube playlist -->
+
+
+<div id="wrap">
+  <div id=title>
+    <h1><img src="http://chart.apis.google.com/chart?chst=d_text_outline&chld=000000|38|h|FFFFFF|_|Your last tube" alt="Your last tube"></h1><form method="post"><input type="text" name="artist"><input type=submit value="search artist"></form><br>
+  </div>
+
+ 
+
+
+
+<div id='player'></div>
+<script>
+jQuery("#player").tubeplayer({
+    width: 600, // the width of the player
+    height: 450, // the height of the player
+    allowFullScreen: "true", // true by default, allow user to go full screen
+    initialVideo: "GCdwKhTtNNw", // the video that is loaded into the player
+    preferredQuality: "default",// preferred quality: default, small, medium, large, hd720
+    onPlay: function(id){}, // after the play method is called
+    onPause: function(){}, // after the pause method is called
+    onStop: function(){}, // after the player is stopped
+    onSeek: function(time){}, // after the video has been seeked to a defined point
+    onMute: function(){}, // after the player is muted
+    onUnMute: function(){} // after the player is unmuted
+});
+ loadVideos();
+</script>
+
+
+
+
+<div id="topArtists">
+
+</div>
+<script type="text/javascript">getTopArtists();</script>
+
+</div>
+
+  <div id="float">
+    <script type="text/javascript"><!--
+    google_ad_client = "ca-pub-9218229247285850";
+    /* musica */
+    google_ad_slot = "6610465088";
+    google_ad_width = 120;
+    google_ad_height = 240;
+    //-->
+    </script>
+    <script type="text/javascript"
+    src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+    </script>
+  </div>
+</div>
+
+
+        
+ 
+</body>
+</html>

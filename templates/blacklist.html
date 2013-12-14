@@ -1,0 +1,12 @@
+<h1>Our Artist database</h1><br>
+
+
+<form method="post">
+
+{%for i in genres%}
+	<input type="checkbox" name="{{i[0]}}" value="{{i[0]}}">
+	<b><a href="genre?genre={{i[0]}}">{{i[0]}}</a></b>{{i[1]}}<br>
+{%endfor%}
+</div>
+
+<input type=submit></form>

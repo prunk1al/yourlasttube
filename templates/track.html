@@ -1,46 +1,45 @@
+
 <html>
 <style TYPE="text/css"> 
 <!--
 body
 {
-#bg {
-	position:fixed; 
-	top:-50%; 
-	left:-50%; 
-	width:200%; 
-	height:200%;
-}
-#bg img {
-	position:absolute; 
-	top:0; 
-	left:0; 
-	right:0; 
-	bottom:0; 
-	margin:auto; 
-	min-width:50%;
-	min-height:50%;
-}
-} 
+background-image:url('{{artist.background}}');
+background-color:#cccccc;
+background-position: fixed;
+}  
 
 
 -->
 </style>
+<head>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24611951-5']);
+  _gaq.push(['_setDomainName', 'yourlastube.com']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 'stats.g.doubleclick.net/dc.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+<meta name="description" content="Best music Video for {{track.track_name}}">
+<meta name="keywords" content="{{track.track_name}},{{artist.artist_name}},music videos,youtube, music tube,">
+<link rel="stylesheet" type="text/css" href="styles.css"  />	  </head>
 
 <body>
+<center>
+<h1>{{artist.artist_name}} / {{track.track_name}}</h1><br>
 
-<div id="bg">
-	<img src="`{{bg}}" alt="">
-</div>
-
-<h1>{{artist}} / {{song}}</h1><br>
-<b>{{video}}</b>
 <form method="post">
 {%if videos!=" "%}
 
-	<div class="lyte" id="{{videos}}" style="width:48;height:38;"><noscript><a href="http://youtu.be/{{videos}}">Watch on YouTube</a></noscript>
-<script>(function(){d=document;if(!document.getElementById('lytescr')){lyte=d.createElement('script');lyte.async=true;lyte.id="lytescr";lyte.src="http://futtta.be/lyte/lyte.js";d.getElementsByTagName('head')[0].appendChild(lyte)}})();</script></div>
-
-	
+	<a href="http://www.youtube.com/watch?v={{track.track_video}}" rel="prettyPhoto[gallery1]" title="{{track.track_name}}" ><img src="http://img.youtube.com/vi/{{track.track_video}}/0.jpg" width=400> </a>
+<div id= "text">	
 	<b>Video erroneo???</b><br>
 {%else%}
 	
@@ -48,10 +47,23 @@ body
 		
 {%endif%}
 Introduce la id de youtube: <input type="text"name="video"><br>
-	<input type="hidden" name="mbid" value="{{mbid}}">
-	<input type="hidden" name="artist" value="{{artist}}">
-	<input type="hidden" name="song" value="{{song}}">
+	<input type="hidden" name="mbid" value="{{track.track_mbid}}">
+	<input type="hidden" name="artist" value="{{artist.artist_name}}">
+	<input type="hidden" name="song" value="{{track.track_name}}">
 		<input type="submit">	
 	
 </form>
+</div>
+</center>
+ <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+ <!-- prettyPhoto -->
+    <script type="text/javascript" src="js/prettyPhoto/js/jquery.prettyPhoto.js"></script>
+    <link rel="stylesheet" href="js/prettyPhoto/css/prettyPhoto.css" type="text/css" media="screen" />
+    <!-- ENDS prettyPhoto -->
+
+<script type="text/javascript" charset="utf-8">
+  $(document).ready(function(){
+    $("a[rel^='prettyPhoto']").prettyPhoto();
+  });
+</script>
 </body>

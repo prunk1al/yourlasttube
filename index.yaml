@@ -10,22 +10,7 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
-- kind: Artist
+- kind: Artists
   properties:
-  - name: mbid
-  - name: artist
-
-- kind: Tracks
-  properties:
-  - name: album_mbid
-  - name: number
-
-- kind: Tracks
-  properties:
-  - name: artist_mbid
-  - name: created
-
-- kind: Tracks
-  properties:
-  - name: track_mbid
-  - name: video
+  - name: letter
+  - name: artist_name

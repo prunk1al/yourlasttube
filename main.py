@@ -1,19 +1,27 @@
+
 import urllib2
 import os
 import webapp2
 import jinja2
 import logging
-import random
-import string
-import time
-import cgi
 import json
 from xml.dom import minidom
+
 from google.appengine.api import memcache
-from google.appengine.ext import db
+from google.appengine.ext import ndb
+from google.appengine.api.labs import taskqueue
+from google.appengine.api import files
+from google.appengine.ext import blobstore
+from google.appengine.ext.webapp import blobstore_handlers
+
+import Class
+import artist
+import album
+import track
+import image
 import tools
-
-
+import string
+import playlists
 jinja_env = jinja2.Environment(autoescape=True,
     loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates')))
 
@@ -30,35 +38,6 @@ class Handler(webapp2.RequestHandler):
     def render(self,template,**kw):
         self.write(self.render_str(template,**kw))
 
-class Tracks(db.Model):
-    song=db.StringProperty(required=True)
-    video=db.StringProperty(required=True)
-    track_mbid=db.StringProperty(required=True)
-    album_mbid=db.StringProperty(required=True)
-    artist_mbid=db.StringProperty(required=True)
-    number=db.IntegerProperty(required=True)
-    created=db.DateTimeProperty(auto_now_add=True)
-
-class Artist(db.Model):
-    artist=db.StringProperty(required=True)
-    mbid=db.StringProperty(required=True)
-    created=db.DateTimeProperty(auto_now_add=True)
-    disambiguation=db.StringProperty(required=True)
-
-class Album(db.Model):
-    mbid=db.StringProperty(required=True)
-    album=db.StringProperty(required=True)
-class Genres(db.Model):
-    genre=db.StringProperty(required=True)
-    track_mbid=db.ListProperty(unicode,required=True)
-
-
-def search_artist(artist):
-    logging.error(artist)
-    artist=artist.replace("-"," ")
-    if list(db.GqlQuery("select * from Artist where artist='%s'"%artist))==[]:
-        logging.error("not in Artist")
-        """get_similar_artist(artist)"""
 
 
 
@@ -67,37 +46,49 @@ class MainPage(Handler):
         self.render("front.html",tracks=tracks)
 
     def get(self):
-
+       
         tracks=[]
-        for entity in Tracks.all().filter("video !=", ' ').run(limit=3):
-            logging.error(entity.video)
-            tracks.append(entity)
+        video=[]
 
         
-        self.render_front(tracks)
+        video=playlists.get_front_playlist()       
+       
+       
+        self.render_front(video)
+        
+        #taskqueue.add(url='/deleteBlobs',method='GET'); 
+
 
     def post(self):
-        artist=self.request.get('artist')
+        artist_name=self.request.get('artist')
 
-        mbid=tools.get_data(artist,d=True,I=True)
+        artists=artist.search_artist(artist_name)
         
-        logging.error("Ya tenemos a los artistas")
-        if len(mbid)==1:
-            logging.error("redirigiendo")
-            self.redirect("/artist?mbid=%s"%mbid[0].mbid)
-
+        if len(artists)==1:
+            self.redirect("/artist?mbid=%s"%artists[0].artist_mbid)
         else:
-            logging.error("ANTES DE LA REDIRECCION")
-            logging.error(len(mbid))
-            for i in mbid:
-                logging.error(i.mbid)
-                logging.error(i.artist)
-                logging.error(i.disambiguation)
+            for i in artists:
                 try:
-                    self.response.headers.add_header('Set-Cookie','%s=%s:::%s'%(str(i.mbid),str(i.artist.replace(' ','_').replace(",","_")),str(i.disambiguation.replace(' ','_'))))
+                    self.response.headers.add_header('Set-Cookie','yourlastube%s=%s:::%s'%(str(i.artist_mbid),str(i.artist_name.replace(' ','_').replace(",","_")),str(i.disambiguation.replace(' ','_'))))
                 except:
                     pass
             self.redirect("/disam")
+
+
+class deleteBlobs(Handler): 
+    def get(self): 
+        all = blobstore.BlobInfo.all(); 
+
+        for x in all:
+            logging.error(all.count())
+            logging.error(x)
+            t=x.delete()
+            logging.error(x)
+        more = (all.count()>0) 
+       # blobstore.delete(all); 
+        if more: 
+            taskqueue.add(url='/deleteBlobs',method='GET'); 
+
 
 class DisambiguationPage(Handler):
     def render_disam(self, artists=""):
@@ -106,110 +97,141 @@ class DisambiguationPage(Handler):
     def get(self):
         c=self.request.cookies
         artists=[]
+        nologo=[]
 
         for i in c:
-    
+        
+            if i[0:11]!='yourlastube':
+                pass
+            else:
+                name,disambiguation=c[i].split(":::")
+                name=name.replace("_"," ")
+                logging.error(i)
+                mbid=i[11:]
+                im=image.get_image(mbid,key='logo')
+                logging.error("DISAMBI")
+                logging.error(im)
+                if im != []:
 
-            name,disambiguation=c[i].split(":::")
-            name=name.replace("_"," ")
-            image=tools.get_image(i,name,key='artist')
-            if image is not None:
+                    ar=[mbid,name,disambiguation,im]
+                    artists.append(ar)
+                    #taskqueue.add(url='/worker', params={'f':'artist.get_artist_mb("%s")'%mbid})
+                    #taskqueue.add(url='/worker', params={'f':'album.get_albums_mb("%s")'%mbid})
+                else:
+                    ar=[mbid,name,disambiguation,im]
+                    nologo.append(ar)
 
-                artist=[i,name,disambiguation,image]
-                artists.append(artist)
-            self.response.headers.add_header("Set-Cookie", "%s=deleted; Expires=Thu, 01-Jan-1970 00:00:00 GMT"%str(i))
+
+                self.response.headers.add_header("Set-Cookie", "%s=deleted; Expires=Thu, 01-Jan-1970 00:00:00 GMT"%str(i))
+        
         if len(artists)==1:
-            self.redirect("/artist?mbid=%s"%i)
+            self.redirect("/artist?mbid=%s"%artists[0][0])
+        if len(artists)==0:
+            artists=nologo
         self.render_disam(artists)
 
-    
-
-
 class BandPage(Handler):
+   
 
-    def render_band(self,artist="",albums="",similar="",artist_mbid="",image="",images="",bg=""):
+    def render_band(self,artist="",albums="",similar="",images=""):
         
-        self.render("band.html",artist=artist,albums=albums,similar=similar,artist_mbid=artist_mbid, image=image,images=images,bg=bg)
+        self.render("band.html",artist=artist,albums=albums,similar=similar,images=images)
 
     def get(self):
         mbid=self.request.get('mbid')
-        artist_mbid=mbid
-        #tools.main(artist_mbid)   #profiling
-
-        artist=tools.get_artist_mb(mbid)
-        logging.error(artist)
         
-        album_mbid=tools.get_albums_mb(mbid)
-        images=[]
-
-
-
-        similar=tools.get_similar(artist_mbid)
-        similar_mbid=[]
-        for s in similar:
-            logging.error(s)
-            mbid=s[1]
-            logo=tools.get_image(mbid,s[0],'artist')
-            logging.error(s[0])
-            similar_mbid.append((mbid,logo))
+        data=memcache.get("bandpage %s"%mbid) 
+        if data is None:
             
-                
-        image=tools.get_image(artist_mbid,artist,'artist')
+            artist_mbid=mbid
         
-        bg=tools.get_image(artist_mbid,artist,'bg')
+            artist_data,album_data=artist.get_artist_albums(mbid)
 
-        self.render_band(artist=artist,albums=album_mbid,similar=similar_mbid, artist_mbid=artist_mbid, image=image,bg=bg)
+            album_data.sort(key=lambda tup: tup.album_date)
+       
+            """
+            for i in Class.Albums.query().iter():
+               
+                logging.error(i.key.parent().get())
 
-      
+            """
+
+            similar=artist.get_similar(artist_mbid)
+
+            for s in similar:
+
+                taskqueue.add(url='/worker', params={'f':'artist.get_artist_albums("%s")'%s.artist_mbid})
+       
+          
+
+            data={"artist":artist_data,"albums":album_data,"similar":similar}
+            logging.debug(data)
+            """
+            data={  artist=Artists
+                    albums=[Albums]
+                    similar=[Artists]
+                    images=[background, logo]
+
+            """
+            memcache.set("bandpage %s"%artist_mbid, data)
+
+        self.render_band(**data)
+
+    def post(self):
+        mbid=self.request.get('mbid')
+        logging.error(mbid)
+        url="/artist?mbid=%s"%mbid
+        self.get()
+
 class AlbumPage(Handler):
-    def render_album(self,artist="",album="",tracks="",album_id="",bg=""):
-        self.render("album.html",artist=artist,album=album,tracks=tracks,album_id=album_id,bg=bg)
+    def render_album(self,artist="",artist_mbid="",album="",tracks="",album_id="",bg="",logo=""):
+        self.render("album.html",artist=artist,artist_mbid=artist_mbid,album=album,tracks=tracks,album_id=album_id,bg=bg,logo=logo)
 
     def get(self):
 
         mbid=self.request.get('mbid')      
-
+        data=memcache.get("albumpage %s"%mbid) 
+        data=None
+        if data is None:
         
-        logging.error(tools.get_album_mb(mbid))
-        album,x=tools.get_album_mb(mbid)
-        artist=x[0]
-        artist_mbid=x[1]
-        logging.error(x)
-        logging.error("ARTISTA:")
-        logging.error(artist)
-        logging.error(artist_mbid)
-        bg=tools.get_image(artist_mbid,artist,'bg')
-        logging.error(bg)       
-        tracks=tools.get_tracks_mb(mbid)
         
-
-        videos=[]
-        for t in tracks:
-            x=tools.get_track(t[0])
             
-            videos.append([x.video, t])
+            album_data=album.get_album_data(mbid)
 
-        """bg=tools.get_image()"""
+            artist_data=album_data.key.parent().get()
+
+            tracks=track.get_tracks(mbid)
+            
+
         
-        self.render_album(artist=artist,album=album,tracks=videos,album_id=mbid,bg=bg)
-        
+            data={"artist":artist_data,"album":album_data,"tracks":tracks}
+            """
+                data={  artist=Artist
+                        album=Album
+                        tracks=[Tracks]
+                }
+            """
+            memcache.set("albumpage %s"%mbid,data) 
+        self.render_album(**data)
+
 
 class TrackPage(Handler):
-    def render_track(self,name="",videos="", mbid="",artist="",song=""):
-        self.render("track.html",name=name,videos=videos, mbid=mbid,artist=artist,song=song)
+    def render_track(self,artist="",album="", track=""):
+        self.render("track.html",artist=artist,album=album, track=track)
    
     def get(self):
        
-        song_mbid=self.request.get("mbid")
+        track_mbid=self.request.get("mbid")
         
-        track=tools.get_track(song_mbid)
+        track_data=Class.Tracks.query(Class.Tracks.track_mbid==track_mbid).get()
+
+
+        album_data=track_data.key.parent().get()
+        artist_data=album_data.key.parent().get()
        
-        song=track.song
-        video=track.video
-        artist=tools.get_artist_mb(track.artist_mbid)
-        genres=tools.get_track_genre(song_mbid) 
+        data={"artist":artist_data,"album":album_data,"track":track_data}
        
-        self.render("track.html",artist=artist, song=song,videos=video,mbid=song_mbid)
+        self.render_track(**data)
 
     def post(self):
 
@@ -217,199 +239,309 @@ class TrackPage(Handler):
         new_video=self.request.get("video")
         artist=self.request.get("artist")
         song=self.request.get("song")
-        for entity in Tracks.all().filter("track_mbid =", song_mbid).fetch(1):
+        for entity in Class.Tracks.query(Class.Tracks.track_mbid == song_mbid).fetch(1):
             entity.video=new_video
-            memcache.set(song_mbid,entity)
-            
+            #memcache.set(song_mbid,entity)
             entity.put()
             
         
         self.redirect("/track?mbid=%s"%song_mbid)
 
-
-        
-
-
-
-
-
-
-class RandomPage(Handler):
-    def render_random(self,lista=""):
-        first=lista.pop()
-        playlist=""
-        for i in lista:
-            playlist=playlist+i+","
-        logging.error(first)
-        logging.error(playlist)
-        url="http://www.youtube.com/embed/"+first+"?playlist="+playlist
-        self.render("random.html", url=url)
-
-        self.redirect(str(url))
-    def get(self):
-        
-        videos=None
-
-        if videos is None:
-            videos=[]
-            for entity in Tracks.all().filter("video !=", " ").fetch(150):
-                videos.append(entity.video)
-                            
-
-        
-        random.shuffle(videos)
-        self.render_random(videos[0:150])
-
-class ArtistsPage(Handler):
-    def render_artist(self,artist=""):
-        self.render("artist.html",artist=artist)
-
-    def get(self):
-
-                
-        
-        
-        artist=list(db.GqlQuery("select * from Artist order by artist"))
-            
-        
-
-        self.render_artist(artist)
-
-    def post(self):
-        artist=self.request.get('artist')
-        artist=artist.replace(" ","-")
-        
-        search(artist)
-        self.redirect("/"+artist)
-
-
-class GenresPage(Handler):
-    def render_genre(self,url=""):
-        self.render("playlist.html",url=url)
-
-    def get(self):
-        genre=self.request.get("genre")
-        query="select * from Genres where genre='%s'"%genre
-        logging.error(query)
-        mbid=list(db.GqlQuery(query))
-        a=[]
-        first=None
-        playlist=""
-        random.shuffle(mbid[0].track_mbid)
-        for i in mbid:
-            logging.error(len(i.track_mbid))
-            passed=[]
-            for x in i.track_mbid:
-                
-                query="select video from Tracks where track_mbid='%s'"%x
-                
-                videos=list(db.GqlQuery(query))
-
-                
-                if videos!=[]:
-                    
-                    if first is None:
-                        
-                        logging.error(videos[0])
-                        first=videos.pop()
-                        i=0
-                    
-                    for d in videos:
-                        
-                        if d.video!=" ":
-                            
-                            if d.video not in passed:
-                            
-
-                                if i>=140:
-                                    break
-                                playlist=playlist+d.video+","
-                                passed.append(d.video)
-                                i=i+1
-        
-
-        url="http://www.youtube.com/embed/"+first.video+"?playlist="+playlist
-        logging.error(url)
-        self.render_genre(url=url)
-        
-
-
-class Clean(Handler):
-    def get(self):
-        artist=list(db.GqlQuery("select mbid from Artist order by mbid"))
-        dupe=''
-        for i in artist:
-            if i.mbid==dupe:
-                logging.error("Drop artist")
-                logging.error(dupe)
-                db.delete(i.key())
-            dupe=i.mbid
-
-        albums=list(db.GqlQuery("select mbid from Album order by mbid"))
-        dupe=''
-        for i in albums:
-            if i.mbid==dupe:
-                logging.error("Drop Album")
-                logging.error(dupe)
-                db.delete(i.key())
-            dupe=i.mbid
-
-        track=list(db.GqlQuery("select track_mbid from Tracks order by track_mbid"))
-        dupe=''
-        for i in track:
-            if i.track_mbid==dupe:
-                logging.error("Drop tracks")
-                logging.error(dupe)
-                db.delete(i.key())
-            dupe=i.track_mbid
-        genre=list(db.GqlQuery("select * from Genres"))
-        for i in genre:
-            if len(i.track_mbid)<=60:
-                logging.error("Drop Genre")
-                logging.error(i.genre)
-                db.delete(i.key())
-
-
-class GenrePage(Handler):
-    def get(self):
-        query="select genre from Genres order by genre"
-        data=list(db.GqlQuery(query))
-        self.render("genres.html",genres=data)
-
 class PlaylistPage(Handler):
-    def render_playlist(self,url=""):
-        self.render("playlist.html",url=url)
+    def render_playlist(self,tracks="", tipo=""):
+        self.render("playlist.html",tracks=tracks, tipo=tipo)
 
     def get(self):
         tipo=self.request.get("tipo")
-        mbid=self.request.get("mbid")
+        song=[]
+        if tipo=="album" or tipo == "artist":
+            mbid=self.request.get("mbid")
 
-        logging.error(self.request.arguments())
+            if tipo=="album":
+                song={"data":[]}
 
-        d={'album':'number','artist':'created'}
+                album_data=album.get_album_data(mbid)
+                artist_data=album_data.key.parent().get()
+                tracks=track.get_tracks(mbid)
+                tracks.sort(key=lambda tup: tup.track_number)
+                for i in tracks:
+                    video={"video_artist":artist_data.artist_name,"video_track":i.track_name,"playlist_videos":i.track_video}
+                    song["data"].append(video)
 
-        query="select * from Tracks where %s_mbid='%s' order by %s"%(tipo,mbid,d[tipo])
-        data=list(db.GqlQuery(query))
-        first=data.pop(0)
+            elif tipo=="artist":
+
+                song=playlists.get_echonest_playlist(tipo,mbid)
+                
+               
+                    
+        elif tipo=="lastfm":
+            modo=self.request.get("modo")
+
+            artists_mbid=[]
+            videos=[]
+            playlist=""
+            
+            tracks="tracks"
+            if modo=="hypped":
+                url=tools.get_url("lastfm","hyppedtracks", " ")
+            elif modo=="top":
+                url=tools.get_url("lastfm","toptracks"," ")
+            elif modo=="loved":
+                url=tools.get_url("lastfm","lovedtracks"," ")
+            elif modo=="tag":
+                
+                genre=self.request.get("genre")
+                
+                song=playlists.get_lastfmTag_playlist(genre)
+            
+
+        elif tipo=="echonest":
+            modo=self.request.get("modo")
+            if modo == 'radio':
+                mbid=self.request.get("mbid")
+                song=playlists.get_echonest_radio(tipo,mbid)
+            elif modo =='tag':
+                genre=self.request.get("genre")
+            
+                song=playlists.get_echonest_tag_radio(genre)
+        
+        logging.error(song)  
+        self.render_playlist(tracks=song, tipo=tipo)
 
 
-        """query="select * from Tracks where %s_mbid='%s' and video!=' '"%(tipo, mbid)
-        data=list(db.GqlQuery(query))
-        first=data.pop()"""
-        playlist=""
-        videos=[]
-        for d in data:
-            if d.video not in videos:
-                playlist=playlist+d.video+","
-                videos.append(d.video)
+class ArtistsPage(Handler):
+    def render_artist(self,artist="",images="",menu="",next_page="",letter=""):
+        self.render("artist.html",artist=artist,images=images,menu=menu,next_page=next_page,letter=letter)
 
-        logging.error(first.video)
-        logging.error(playlist)
-        url="http://www.youtube.com/embed/"+first.video+"?playlist="+playlist
-        self.render_playlist(url=url)
+    def get(self):
+        import image
+        letter=self.request.get('letter')
+        page=self.request.get('page')
+        
+        logging.error("letter '%s'"%letter)
+        logging.error("page '%s'"%page)
+
+        n=int(page)*9-9
+        
+        menu=[]
+        for i in string.ascii_uppercase:
+            menu.append(i)
+    
+
+        qry=Class.Artists.query(Class.Artists.letter == letter ).order(Class.Artists.artist_name).fetch(9,offset=n)
+               
+
+
+        images=[]
+        for i in qry:
+            mbid=i.artist_mbid
+            logo=image.get_image_url('logo',mbid)
+            if logo is None:
+                bg=image.get_image_url('bg',mbid)
+                if bg is not None:
+                    ima=bg+"=s200"
+                else:
+                    ima=None
+            else:
+                ima=logo+"=s200"
+            images.append([mbid,ima])
+
+        if len(qry) ==9:
+            next_page=int(page)+1
+        else:
+            next_page=0
+        
+        self.render_artist(qry,images,menu,next_page,letter=letter)
+
+    def post(self):
+        ar=self.request.get('artist')
+
+        mbid=artist.get_data(ar,d=True,I=True)
+        
+        if len(mbid)==1:
+            self.redirect("/artist?mbid=%s"%mbid[0].mbid)
+        else:
+            for i in mbid:
+                try:
+                    self.response.headers.add_header('Set-Cookie','%s=%s:::%s'%(str(i.mbid),str(i.artist.replace(' ','_').replace(",","_")),str(i.disambiguation.replace(' ','_'))))
+                except:
+                    pass
+            self.redirect("/disam")
+
+
+class LastFmPage(Handler):
+    
+    def get(self):
+        genres=memcache.get("lastfm genres")
+        if genres is not None:
+            self.render("last.html",genres=genres,key="lastfm")
+        else:
+            url=tools.get_url("lastfm","toptags"," ")
+            j=tools.get_json(url)
+
+            genres=[]
+            for i in j["tags"]["tag"]:
+
+                genres.append((i["name"],i["url"][23:]))
+
+            memcache.set("lastfm genres",genres)
+            logging.error(genres)
+            self.render("last.html",genres=genres)
+
+class EchonestPage(Handler):
+    
+    def get(self):
+        genres=memcache.get("echonest genres")
+        if genres is not None:
+            self.render("last.html",genres=genres,key="echonest")
+        else:
+            url=tools.get_url("echonest","tags"," ")
+            logging.error(url)
+            j=tools.get_json(url)
+
+            genres=[]
+            for i in j["response"]["terms"]:
+
+                genres.append([i["name"]])
+
+            memcache.set("echonest genres",genres)
+            logging.error(genres)
+            self.render("last.html",genres=genres,key="echonest")
+
+class xhrArtist(Handler):
+    def post(self):
+        j=self.request.body
+        data=json.loads(j)
+        mbid=data[10:-1]
+        logging.error(mbid)
+        logging.error(image.get_image(mbid,"bg"))
+        self.response.out.write(image.get_image(mbid,"bg"))
+
+    def get(self):
+        mbid=self.request.get('mbid') 
+        self.render("xhrArtist.html",artist=mbid)
+
+class xhrLogo(Handler):
+    def post(self):
+        j=self.request.body
+        data=json.loads(j)
+        mbid=data[10:-1]
+        self.response.out.write(image.get_image(mbid,"logo"))
+
+class xhrAlbumImage(Handler):
+    def post(self):
+        j=self.request.body
+        data=json.loads(j)
+        mbid=data[9:-1]
+        self.response.out.write(image.get_image(mbid,"album"))
 
 
 
+class xhrAlbums(Handler):
+    def post(self):
+        j=self.request.body
+        data=json.loads(j)
+        mbid=data[10:-1]
+
+        album_data=artist.getXhrAlbums(mbid)
+
+        self.response.out.write(json.dumps(album_data))
+
+class xhrSimilar(Handler):
+    def post(self):
+        j=self.request.body
+        data=json.loads(j)
+        mbid=data[10:-1]
+
+        
+        similar=artist.get_xhrsimilar(mbid)
+
+        self.response.out.write(json.dumps(similar))
+
+class xhrFront(Handler):
+    def get(self):
+        self.render("xhrfront.html")
+
+class xhrTopArtists(Handler):
+    def get(self):
+        data=playlists.getTopTracks()
+
+        artists=[]
+        for d in data["tracks"]["track"]:
+            artist={}
+            artist["name"]=d["artist"]["name"]
+            artist["mbid"]=d["artist"]["mbid"]
+            if artist not in artists:
+                artists.append(artist)
+
+        self.response.out.write(json.dumps(artists))
+
+class xhrFrontVideos(Handler):
+
+    def get(self):
+    
+        data=playlists.getTopTracks()
+
+        tracks=[]
+        for d in data["tracks"]["track"]:
+            track={}
+            track["artist"]=d["artist"]["name"]
+            track["name"]=d["name"]
+            if tracks not in tracks:
+                tracks.append(track)
 
 
-app = webapp2.WSGIApplication([('/', MainPage),('/clean', Clean),('/disam',DisambiguationPage),('/playlist', PlaylistPage),('/genres',GenrePage),("/genre",GenresPage),('/artists',ArtistsPage),('/random',RandomPage),('/track', TrackPage),('/album', AlbumPage),('/artist', BandPage)], debug=True)
+        self.response.out.write(json.dumps(tracks))
+
+class xhrGetVideo(Handler):
+
+    def post(self):
+    
+        j=self.request.body
+        data=json.loads(j)
+        tname=data[8:data.find(',')]
+        artist=data[data.find(',')+9:-1]
+        self.response.out.write(track.get_video(artist,tname))
+
+class xhrAlbum(Handler):
+    def get(self):
+        album=self.request.get("mbid")
+        self.render("xhrAlbum.html",album=album)
+
+    
+class xhrGetAlbumTracks(Handler):
+    def post(self):
+        j=self.request.body
+        data=json.loads(j)
+        mbid=data["album"]
+        
+        tracks=track.getAlbumTracks(mbid)
+        logging.error(tracks)
+        tracks.sort(key=lambda tup: tup["number"])
+
+        self.response.out.write(json.dumps(tracks))
+
+class xhrGetTrackVideo(Handler):
+    def post(self):
+        j=self.request.body
+        data=json.loads(j)
+        mbid=data["track"]
+
+        self.response.out.write(track.getTrackVideo(mbid))
+
+class Worker(Handler):
+    
+
+    def post(self):
+        function=self.request.get('f')
+        logging.error(function)
+
+        eval(function)
+
+
+app = webapp2.WSGIApplication([('/', MainPage),('/echonest',EchonestPage),('/lastfm',LastFmPage),('/deleteBlobs',deleteBlobs),('/artists',ArtistsPage),('/playlist',PlaylistPage),('/disam',DisambiguationPage),('/worker',Worker),
+                               ('/track', TrackPage),('/album',AlbumPage),('/artist', BandPage), 
+                               ('/xhrArtist',xhrArtist),('/xhrFront', xhrFront),('/xhrAlbum',xhrAlbum),
+                               ('/xhrLogo',xhrLogo),('/xhrAlbums', xhrAlbums),('/xhrAlbumImage', xhrAlbumImage),('/xhrSimilar', xhrSimilar),('/xhrTopArtists', xhrTopArtists),('/xhrFrontVideos', xhrFrontVideos),('/xhrGetVideo',xhrGetVideo),
+                               ('/xhrGetAlbumTracks',xhrGetAlbumTracks),('/xhrGetTrackVideo',xhrGetTrackVideo)
+                               ], debug=True)

@@ -1,91 +1,267 @@
 import logging 
 from google.appengine.api import memcache
-from google.appengine.ext import db
+from google.appengine.ext import ndb
+import tools
+import image
+import Class
+from google.appengine.api.labs import taskqueue
+import track
+import time
 
-def get_dbArtist(artist):
+def get_artist_albums(artist_mbid):
+    
 
-    query="select * from Artist where artist='%s'"%artist
-    logging.error("get_dbArtist query")
-    logging.error(query)
-    data=memcache.get(query)
-    
-    if data is not None:
-        if data!= []:
-            if data[0].disambiguation is not None:
-                data=None
-        if data is not None:
-            logging.error("mbid from memcache get_dbArtist")
-            return data
-    
-    data=list(db.GqlQuery(query))
-    memcache.set(query,data)
-    if data != []:
-        logging.error("mbid from db get_dbArtist")
-    return data
+    albums=[]
+    try:
+        artist=Class.Artists.query(Class.Artists.artist_mbid==artist_mbid).get()
+    except:
+        artist=None
+    if artist is not None:
+        for i in Class.Albums.query(ancestor=artist.key).iter():
+            albums.append(i)
+        
+        if len(albums)>0:
+            logging.error("return from database")
+            return artist, albums
+                   
+    albums=[]
 
-def  get_similar(mbid=""):
-    
-    data=memcache.get("similar_%s"%mbid)
-    logging.error("similar=%s"%data)
-    if data is not None:
-        return data
+    logging.error("START OF Artist_ALBUMS")
 
+    url=tools.get_url("musicbrainz","artist_mbid",artist_mbid)
+    xml=tools.get_xml(url)
+    try:
+        artist_name= xml.getElementsByTagName("name")[0].childNodes[0].nodeValue
+    except:
+        return None
+    logo=image.get_image(artist_mbid,'logo')     
+    background=image.get_image(artist_mbid,'bg')
     
+    artist=Class.Artists(artist_name=artist_name, artist_mbid=artist_mbid,disambiguation=" ",letter=artist_name[0], key=ndb.Key(Class.Artists,artist_mbid))
+    artist.logo=logo
+    artist.background=background
+    try:
+        artist_key=artist.put()  
+    except:
+        pass
+
+    logging.debug(artist)
+
+
+    releases=xml.getElementsByTagName("release-group")
+    for rg in releases:
+
+        try:
+            if rg.getElementsByTagName("primary-type")[0].childNodes[0].nodeValue != "Album":
+                continue
+            error=rg.getElementsByTagName("secondary-type")[0]
+            continue
+        except:
+            try:
+                if rg.attributes.get("type").value == "Album":
+
+                    album_mbid=rg.attributes.get("id").value
+                    b=Class.Albums(key=ndb.Key(Class.Albums,album_mbid,parent=ndb.Key(Class.Artists,artist_mbid)))
+                    b.ancestor=ndb.Key(Class.Artists,artist_mbid)
+                    b.album_mbid=album_mbid
+                    b.album_name=rg.getElementsByTagName("title")[0].childNodes[0].nodeValue
+                    b.album_date=rg.getElementsByTagName("first-release-date")[0].childNodes[0].nodeValue
+                    b.album_image=image.get_image(album_mbid, key="album")
+                    logging.debug(b)
+                    albums.append(b)
+                    
+            except:
+                continue
+
+    albums.sort(key=lambda tup: tup.album_date)
+    try:
+        test=ndb.put_multi(albums)
+    except:
+        pass
+
+    logging.error("END OF Artist_ALBUMS")
+
+    return artist,albums
+
+
+def getAlbumFromMBrainz(mbid):
+    logging.error("START OF getAlbumFromMBrainz")
+    albums=[]
+
+    url=tools.get_url("musicbrainz","artist_mbid",mbid)
+    xml=tools.get_xml(url)
+
+    try:
+        artist_name= xml.getElementsByTagName("name")[0].childNodes[0].nodeValue
+    except:
+        return None
+    
+
+    releases=xml.getElementsByTagName("release-group")
+    for rg in releases:
+
+        try:
+            if rg.getElementsByTagName("primary-type")[0].childNodes[0].nodeValue != "Album":
+                continue
+            error=rg.getElementsByTagName("secondary-type")[0]
+            continue
+        except:
+            try:
+                if rg.attributes.get("type").value == "Album":
+                    album={}
+                    album["mbid"]=rg.attributes.get("id").value
+                    album["name"]=rg.getElementsByTagName("title")[0].childNodes[0].nodeValue
+                    album["date"]=rg.getElementsByTagName("first-release-date")[0].childNodes[0].nodeValue
+                    albums.append(album)
+                    logging.error(albums)
+            except:
+                continue
+
+    logging.error("END OF Artist_ALBUMS")
+    albums.sort(key=lambda tup: tup["date"], reverse=True)
+
+    return albums
+
+
+def getXhrAlbums(mbid=""):
+    
+
+    albums= getAlbumFromMBrainz(mbid)
+    logging.error(albums)
+
+    return albums
+
+
+
+
+def get_xhrsimilar(mbid=""):
+    similars=[]
     logging.error("GETTING SIMILAR FROM ECHONEST")
-    url=get_url('echonest','similar',mbid)
-    j=get_json(url)
+    url=tools.get_url('lastfm','similar',mbid)
+    j=tools.get_json(url)
     
     if j is None:
         return []
     
-    similar=[]
+    try:
+        a=j['similarartists']['artist']
+    except:
+        return []
+    for i in a:
+        name=i['name']
+        similar={}
+        similar["name"]=name
+        similar["mbid"]=i['mbid']
+        logging.error(similar)
+        similars.append(similar)
+
+    return similars
+
+def  get_similar(mbid=""):
     
+    data=memcache.get("similar_%s"%mbid)
+    
+    if data is not None:
+        return data
+
+    similars=[]
+    logging.error("GETTING SIMILAR FROM ECHONEST")
+    url=tools.get_url('echonest','similar',mbid)
+    j=tools.get_json(url)
+    
+    if j is None:
+        return []
+    
+    try:
+        a=j['response']['artists']
+    except:
+        return []
     for i in j['response']['artists']:
         name=i['name']
-        s_mbid=i['foreign_ids'][0]['foreign_id'][19:]
+        if 'foreign_ids' in i.keys():
+            similar=Class.Artists()
+            similar.artist_name=name
+            similar.artist_mbid=i['foreign_ids'][0]['foreign_id'][19:]
+            similar.logo=image.get_image(similar.artist_mbid,"logo")
         
-        similar.append([name,s_mbid])
-
+            similars.append(similar)
+        
+        logging.debug(similars)
     logging.error("END OF ECHONEST CODE")
-    memcache.set("similar_%s"%mbid,similar)   
-    return similar
+    memcache.set("similar_%s"%mbid,similars)   
+    return similars
 
-def get_data(artist,d=False, I=False):
-    
-    logging.error("getting data of %s"%artist)
-    data=get_dbArtist(artist)
-    if data != []:
-        logging.error("mbid from db or memcache get_data")
+
+def get_artist_logo(mbid):
+    url=tools.get_url('fanart','artist',mbid)
+    j=tools.get_json(url)
+    if j is None:
+        return None
+    for i in j:
+        try:
+            logo=j[i]['musiclogo'][0]['url']+'/preview'
+        except:
+            return None
+    return logo
+
+
+def get_artist_mb(mbid):
+    data=memcache.get("%s artist="%mbid)
+    if data is not None:
         return data
+    try:
+        data=Class.Artists.query(artist_mbid==artist_mbid).get()
+
+        if data != []:
+            memcache.set("%s artist="%mbid, data)
+            return data
+    except:
+        pass
+
+    url="http://www.musicbrainz.org/ws/2/artist/?query=arid:"+mbid
+    xml=tools.get_xml(url)
+
+    if xml.getElementsByTagName("artist-list")[0].attributes.get("count").value == '1':
+        artist_name= xml.getElementsByTagName("name")[0].childNodes[0].nodeValue
+        artist_mbid=mbid        
+        logo=image.get_image(artist_mbid,'logo')     
+        background=image.get_image(artist_mbid,'bg')
+
+        artist=Class.Artists(artist_name=artist_name, artist_mbid=artist_mbid,disambiguation=" ",letter=artist_name[0], key=ndb.Key(Class.Artists,artist_mbid))
+        artist.logo=logo
+        artist.background=background
+
+
+        try:
+            artist_key=artist.put()
+        except:
+            artist_key=None 
+            
+        return artist
+
+def search_artist(artist_name):
+
     
-    url=get_url('musicbrainz','artist',artist)
-    xml=get_xml(url)
+    logging.error("getting data of %s"%artist_name)
+    data=Class.Artists.query(Class.Artists.artist_name==artist_name).get()
+    if data is not None:
+        logging.error("mbid from ndb or memcache get_data")
+        return [data]
+    
+    url=tools.get_url('musicbrainz','artist',artist_name)
+    xml=tools.get_xml(url)
     parsed=xml.getElementsByTagName("artist")
     
     disambiguation=" "
-    mbid=[]
-
-    logging.error(int(xml.getElementsByTagName("artist-list")[0].attributes.get("count").value))
-    logging.error(xml.getElementsByTagName("artist-list")[0].attributes.get("count").value == '1')
+    artists=[]
 
     if xml.getElementsByTagName("artist-list")[0].attributes.get("count").value == '1' :
         
-        mbidId=parsed[0].attributes.get("id").value
-        url="http://musicbrainz.org/ws/2/artist/"+mbidId+"?inc=releases"
-
-        logging.error(url)
-        x=get_xml(url)  
-        name=xml.getElementsByTagName("name")[0].childNodes[0].nodeValue
-        disambiguation=" "
-        ar=Artist(artist=name, mbid=mbidId, disambiguation=disambiguation)
-        if I==True:
-            logging.error("INSERTING %s IN DATABASE"%name)
-            insert_in_db(ar,'Artist')
-        mbid.append(ar)
-        memcache.set("select * from Artist where artist='%s'"%name,[ar])
-
+        artist_mbid=parsed[0].attributes.get("id").value
+        artist_data,album_data=get_artist_albums(artist_mbid)
+        artists.append(artist_data)
     else:
-        logging.error("yuhuu")
+        
         for a in parsed:
         
             mbidId=a.attributes.get("id").value
@@ -93,34 +269,21 @@ def get_data(artist,d=False, I=False):
 
             try:
                 disambiguation=a.getElementsByTagName("disambiguation")[0].childNodes[0].nodeValue
-                if d==False:
-                    continue
             except:
                 disambiguation=" "
-            logging.error(mbidId)
-            logging.error(name)
-            ar=Artist(artist=name, mbid=mbidId, disambiguation=disambiguation)
-            mbid.append(ar)
-            memcache.set("select * from Artist where artist='%s'"%name,[ar])
-    logging.error(mbid)
+            
+            artist_data=Class.Artists(artist_name=name, artist_mbid=mbidId, disambiguation=disambiguation, letter=name[0])
+            artists.append(artist_data)
+            
+    
 
-    return mbid
-
-def get_artist_mb(mbid):
-    data=memcache.get("%s artist="%mbid)
-    if data is not None:
-        return data
-
-    data=list(db.GqlQuery("select artist from Artist where mbid='%s'"%mbid))
-    if data != []:
-        memcache.set("%s artist="%mbid, data[0].artist)
-        return data[0].artist
-
-    url="http://www.musicbrainz.org/ws/2/artist/?query=arid:"+mbid
-    xml=get_xml(url)
-
-    name= xml.getElementsByTagName("name")[0].childNodes[0].nodeValue
-    memcache.set("%s artist="%mbid, name)
-    a=Artist(artist=name, mbid=mbid,disambiguation=" ")
-    a.put()
-    return name
+    return artists
+def crawl_artist(artist_name):
+    t=search_artist(artist_name)
+                        
+    for m in t:
+        logging.error(m)
+        if artist_name==m.artist_name:
+            
+                
+            taskqueue.add(url='/worker',params={'f': '[track.get_tracks(w.album_mbid) for w in  artist.get_artist_albums("%s")[1]]'%m.artist_mbid})

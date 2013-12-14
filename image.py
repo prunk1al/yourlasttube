@@ -1,15 +1,82 @@
 import logging
+from xml.dom import minidom
+
 from google.appengine.api import images
 from google.appengine.ext import blobstore
 from google.appengine.api import files
+from google.appengine.api.labs import taskqueue
+from google.appengine.api import memcache
+from google.appengine.api import urlfetch
+
+
+import tools
+import urllib2
+import async
+import album
+
+
+def get_album_image_fanart(rpc):
+        
+        images=None 
+        
+        try:
+            xml=minidom.parseString(rpc.get_result().content)            
+            album_url=xml.getElementsByTagName("album")[0].getElementsByTagName("albumcover")[0].attributes.get('url').value+"/preview"
+            images=urllib2.urlopen(album_url).read()
+
+        except:
+            pass
+            
+        return images
+def  get_album_image_lastfm(rpc):
+        
+        images=None
+                
+        xml=minidom.parseString(rpc.get_result().content)
+        releases=xml.getElementsByTagName('release')
+        for i in releases:
+                if images is None:
+                    release=i.attributes.get('id').value
+                    lastfm_url=tools.get_url("lastfm","album",release)
+                    j=tools.get_json(lastfm_url)
+                    album_url= j["album"]["image"][1]["#text"]
+                    images=urllib2.urlopen(album_url).read()
+
+        return images
+
+def get_album_lastfm(params):
+
+        url=url="http://www.musicbrainz.org/ws/2/release-group/"+params.album_mbid+"?inc=releases"
+        rpc=urlfetch.create_rpc(deadline=5)
+        urlfetch.make_fetch_call(rpc,url)
+        images=get_album_image_lastfm(rpc)
+
+        return images
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 def fill_image(server,url):
     
     if server=='fanart':
-        logging.error(url)
-        j=get_json(url)
+        
+        j=tools.get_json(url)
         
         if j is None:
             return[]
@@ -43,9 +110,9 @@ def fill_image(server,url):
 
                 logging.error(bg)
                 fil=urllib2.urlopen(bg).read()
-                logging.error("create bg from fill")
                 
-                write_blob(fil,file_name)
+                
+                tools.write_blob(fil,file_name)
             
                
             query=blobstore.BlobInfo.all().filter('filename =','logo_%s.png'%mbid)
@@ -62,10 +129,10 @@ def fill_image(server,url):
                 file_name = files.blobstore.create(mime_type='image/png',_blobinfo_uploaded_filename='logo_%s.png'%mbid)
 
                 logging.error(logo)
-                logging.error("create logo from fill")
+                
                 fil=urllib2.urlopen(logo).read()
                 
-                write_blob(fil,file_name)
+                tools.write_blob(fil,file_name)
                 
         
         try: 
@@ -83,7 +150,7 @@ def fill_image(server,url):
                 url=None
         
         if len(albums)>=1:
-            test(albums)
+            async.test(albums)
 
 
     
@@ -91,67 +158,69 @@ def fill_image(server,url):
     
 
 def get_image_url(type,mbid):
-    query = blobstore.BlobInfo.all()
-    query.filter('filename =', '%s_%s.png'%(type,mbid))
-    blob_key=query[0].key()
+    data=memcache.get('%s,%s'%(type,mbid))
+    if data is not None:
+        return data
+    try:
+        query = blobstore.BlobInfo.all()
+        query.filter('filename =', '%s_%s.png'%(type,mbid)).fetch(1)
+    except:
+        return None
+    
+    try:
+        blob_key=query[0].key()
+    except:
+        return None
     url=images.get_serving_url(query[0].key())
+    memcache.set('%s,%s'%(type,mbid),url)
     return url
 
 
-def get_image(mbid,name,key=""):
+def get_image(mbid,key=""):
     
     
-
-    if key=='artist':
+    url=""
+    if key=='logo':
         
-        try:
-            url=get_image_url('logo',mbid)
-
-        except:
-            url=get_url('fanart','artist',mbid)
-            url=fill_image('fanart',url)
-            """j=get_json(url)
-        
+        url=get_image_url('logo',mbid)
+        if url is not None:
+            return url
+        else:
+            url=tools.get_url('fanart','artist',mbid)
+            
+            j=tools.get_json(url)
             if j is None:
-                return[]
-        
-            for artist in j:
+                return None
+            for i in j:
                 try:
-                    name=artist
-
-                    mbid=j[artist]['mbid_id']
-
-                    logo=j[artist]['musiclogo'][0]['url']+'/preview'
-            
-                    bg=j[artist]['artistbackground'][0]['url']
+                    logo=j[i]['musiclogo'][0]['url']+'/preview'
                 except:
-                    return []
-            
+                    return None
 
-
-                query=blobstore.BlobInfo.all().filter('filename =','logo_%s.png'%mbid)
-                if int(query.count()) >=1:
-                    blob_key=query[0].key
-                else:
-                    blob_key=None
+            query=blobstore.BlobInfo.all().filter('filename =','logo_%s.png'%mbid)
+            if int(query.count()) >=1:
+                blob_key=query[0].key
+            else:
+                blob_key=None
             
 
             
-                if blob_key is None:
-    
+            if blob_key is None:
+       
                 
-                    file_name = files.blobstore.create(mime_type='image/png',_blobinfo_uploaded_filename='logo_%s.png'%mbid)
+                file_name = files.blobstore.create(mime_type='image/png',_blobinfo_uploaded_filename='logo_%s.png'%mbid)
 
-                    logging.error(logo)
-                    logging.error("create logo from ")
-                    fil=urllib2.urlopen(logo).read()
-                    
-                    write_blob(fil,file_name)"""
-
-                    
-
-
-
+                logging.error(logo)
+                
+                fil=urllib2.urlopen(logo).read()
+                
+                tools.write_blob(fil,file_name)
+                logo=get_image_url('logo', mbid)
+            
+            #taskqueue.add(url='/worker', params={'f':'image.fill_image("fanart","%s")'%url})
+            #url=fill_image('fanart',url)
+            url=logo
+   
     if key=='bg':
         
         
@@ -161,15 +230,15 @@ def get_image(mbid,name,key=""):
             query = blobstore.BlobInfo.all()
             query.filter('filename =', 'bg_%s.png'%mbid)
             blob_key=query[0].key()
-            url=images.get_serving_url(query[0].key())+"=s0"
+            url=images.get_serving_url(query[0].key())+"=s1600"
             
 
         except:
-            url=get_url('fanart','artist',mbid)
-            j=get_json(url)
+            url=tools.get_url('fanart','artist',mbid)
+            j=tools.get_json(url)
         
             if j is None:
-                return[]
+                return None
         
             for artist in j:
                 try:
@@ -181,7 +250,7 @@ def get_image(mbid,name,key=""):
             
                     bg=j[artist]['artistbackground'][0]['url']
                 except:
-                    return []
+                    return None
 
 
                 query=blobstore.BlobInfo.all()
@@ -200,9 +269,10 @@ def get_image(mbid,name,key=""):
 
                     logging.error(bg)
                     fil=urllib2.urlopen(bg).read()
-                    logging.error("create bg from fill")
+                    
                 
-                    write_blob(fil,file_name)
+                    tools.write_blob(fil,file_name)
+                    bg=get_image_url('bg', mbid)
                     url=bg
             
     if key=='album':
@@ -219,24 +289,43 @@ def get_image(mbid,name,key=""):
 
         except:
             try:
-                url=get_url('fanart','album',mbid)
-                xml=get_xml(url)
+                url=tools.get_url('fanart','album',mbid)
+                xml=tools.get_xml(url)
                 url=xml.getElementsByTagName("album")[0].getElementsByTagName("albumcover")[0].attributes.get('url').value
                 
                 url=url+"/preview"
                 
                 file_name = files.blobstore.create(mime_type='image/png',_blobinfo_uploaded_filename='album_%s.png'%mbid)
-                logging.error(url)
+                logging.error(file_name)
                 image=urllib2.urlopen(url).read()
-                logging.error("creating new album in blobstore")
                 
-                write_blob(image,file_name)
+                
+                tools.write_blob(image,file_name)
                 
             except:
                 try:
-                    url=get_url('lastfm','album', mbid)
-                    xml=get_xml(url)
-                   
+                    
+                    url="http://www.musicbrainz.org/ws/2/release-group/"+mbid+"?inc=releases"
+                    xml=tools.get_xml(url)
+                                       
+                    
+                    releases=xml.getElementsByTagName('release')
+                    logging.error(releases)
+                    for i in releases:
+                        
+                            release=i.attributes.get('id').value
+
+                            logging.error("release: %s"%release)
+                            url=tools.get_url("lastfm","album",release)
+                            logging.error(url)
+                            j=tools.get_json(url)
+
+                            file_name = files.blobstore.create(mime_type='image/png',_blobinfo_uploaded_filename='album_%s.png'%mbid)
+                            url= j["album"]["image"][1]["#text"]
+                            image=urllib2.urlopen(url).read()
+                            tools.write_blob(image,file_name)
+                            return url
+
 
                 except:
                     url=None

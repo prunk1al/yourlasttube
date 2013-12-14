@@ -1,0 +1,61 @@
+<html>
+<style TYPE="text/css"> 
+<!--
+body
+{
+background: url('{{bg}}') no-repeat center center fixed;
+-webkit-background-size: cover;
+			-moz-background-size: cover;
+			-o-background-size: cover;
+			background-size: cover;
+
+} 
+
+#track{
+	
+}
+#title{
+	position: relative;
+}
+.Float{
+	float: left;
+	padding: 5px;
+	margin:5px;
+}
+.Top{
+	float: right;
+}
+-->
+</style>
+<head>
+	
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24611951-5']);
+  _gaq.push(['_setDomainName', 'yourlastube.com']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 'stats.g.doubleclick.net/dc.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+<body>
+
+<div class="Float">
+<h1>{{key}} Music Genres</h1><br>
+
+
+
+{%for genre in genres%}
+	<h3><a href="playlist?tipo={{key}}&modo=tag&genre={{genre[0]}}">{{genre[0]}} Video Playlist</a></h3><br>
+{%endfor%}
+
+
+
+
+</body>

@@ -1,0 +1,28 @@
+<head>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-24611951-5']);
+  _gaq.push(['_setDomainName', 'yourlastube.com']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 'stats.g.doubleclick.net/dc.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+<h1>Our Artist database</h1><form method="post"><br>
+
+We found Varius Artist With similar Alias:<br><br>
+
+{%for i in artists%}
+	<b><a href="artist?mbid={{i[0]}}"><img src="{{i[3]}}"></a><a href="artist?mbid={{i[0]}}">{{i[1]}}</a></b>  {{i[2]}}
+	{%if i.dis != " " %}
+		{{i.disambiguation}} 
+	{%endif%}<br>
+{%endfor%}
+</div>
+
