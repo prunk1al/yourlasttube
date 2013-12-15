@@ -12,15 +12,39 @@ body{
 
 
 
-#title{
+
+
+#contents{
   position: relative;
+  width: 900px;
+  top:100px;
+  margin: 0 auto ;
 }
 
+#player{
+  position: absolute;
+  width: 425px;
+  right:260px;
+}
+
+#topArtists{
+  width: 210px;
+  position: absolute;
+  right: 40px;
+  
+}
+
+button {
+    background:none!important;
+    border:none; 
+    padding:0!important;
+    color:#FFFFFF;
+}
 -->
 </style>
 <html>
 <head>
-<script type="text/javascript">
+  <script type="text/javascript">
 
   var _gaq = _gaq || [];
   _gaq.push(['_setAccount', 'UA-24611951-5']);
@@ -33,64 +57,74 @@ body{
     var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
   })();
 
-</script>
-<link type="text/css" rel="stylesheet" media="screen, projection" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/black-tie/jquery-ui.css" />
-<link type="text/css" rel="stylesheet" media="screen, projection" href="js/css/youtube-player.css" />
+  </script>
+  <link type="text/css" rel="stylesheet" media="screen, projection" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/black-tie/jquery-ui.css" />
+  <link type="text/css" rel="stylesheet" media="screen, projection" href="js/css/youtube-player.css" />
 
 
 
-<meta name="description" content="Best music Videos">
-<meta name="keywords" content="music videos,youtube music, music tube, music video downloads,youtube free music videos,free youtube music videos,free music videos on youtube,free music videos at youtube,children s music videos youtube,utube music videos">
+  <meta name="description" content="Best music Videos">
+  <meta name="keywords" content="music videos,youtube music, music tube, music video downloads,youtube free music videos,free youtube music videos,free music videos on youtube,free music videos at youtube,children s music videos youtube,utube music videos">
 </head>
 
 
 <body>
-<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
-<!-- jYoutube playlist -->
-<script type="text/javascript" src="js/test.js"></script>
-<script src="js/jQuery.tubeplayer.min.js"></script>
+  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
 
-  <!-- END jYoutube playlist -->
+  <script type="text/javascript" src="js/test.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script>
 
 
-<div id="wrap">
-  <div id=title>
-    <h1><img src="http://chart.apis.google.com/chart?chst=d_text_outline&chld=000000|38|h|FFFFFF|_|Your last tube" alt="Your last tube"></h1><form method="post"><input type="text" name="artist"><input type=submit value="search artist"></form><br>
-  </div>
 
- 
+  <div id="wrap">
+    <div id="title">
+      <center>
+        <img src="http://chart.apis.google.com/chart?chst=d_text_outline&chld=000000|38|h|FFFFFF|_|Your last tube" alt="Your last tube" /><br><br>
+        <form method="post"><input type="text" name="artist"><input type=submit value="search artist"></form>
+      </center>
+    </div>
 
 
-<script src="http://ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script>
 
-   <script type="text/javascript">
-   loadVideos();
-  </script>
 
-  <div id="ytapiplayer">
-    You need Flash player 8+ and JavaScript enabled to view this video.
-  </div>
+    <div id="contents">
 
-  <script type="text/javascript">
+    <div id="player">
+
+    <script type="text/javascript">
+    loadVideos();
+    </script>
+
+    <div id="ytapiplayer">
+      You need Flash player 8+ and JavaScript enabled to view this video.
+    </div>
+
+    <script type="text/javascript">
 
     var params = { allowScriptAccess: "always" , bgcolor:"#cccccc"};
     var atts = { id: "myytplayer" };
     swfobject.embedSWF("http://www.youtube.com/v/4SLBizx05Bo?enablejsapi=1&playerapiid=ytplayer", 
-                       "ytapiplayer", "425", "356", "8", null, null, params, atts);
+     "ytapiplayer", "425", "356", "8", null, null, params, atts);
 
     
-  </script>
+    </script>
+
+    <table id="songs">
+    </table>
+
+  </div>
 
 
 
 
 
+    <div id="topArtists">
+      <table id="logos">
+      </table>
+    </div>
+    <script type="text/javascript">getTopArtists();</script>
 
-<div id="topArtists">
-
-</div>
-<script type="text/javascript">getTopArtists();</script>
-
+  </div>
 </div>
 
   <div id="float">
@@ -109,7 +143,7 @@ body{
 </div>
 
 
-        
- 
+
+
 </body>
 </html>
