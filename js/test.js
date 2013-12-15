@@ -201,15 +201,20 @@ function getTopLogo(artist){
             if (image=="None"){
                 image="http://chart.apis.google.com/chart?chst=d_text_outline&chld=000000|38|h|FFFFFF|_|"+name;
             }
-            var div=document.getElementById("topArtists")
-            var a=document.createElement("a");
-                a.href="xhrArtist?mbid="+artist["mbid"]
-            var img=document.createElement("img");
-                img.src=image;
-                img.id=artist["mbid"]
-                img.alt=name
-            a.appendChild(img)
-            div.appendChild(a);
+            var table=document.getElementById("logos");
+                var tr=document.createElement("tr");
+                    var td =document.createElement("td");
+                        var a=document.createElement("a");
+                            a.href="xhrArtist?mbid="+artist["mbid"]
+                            var img=document.createElement("img");
+                                img.src=image;
+                                img.id=artist["mbid"]
+                                img.alt=name
+                        a.appendChild(img)
+                    td.appendChild(a)
+                tr.appendChild(td)
+            table.appendChild(tr)
+            
             
         };
         var query='{"artist":'+artist["mbid"]+'}';
@@ -228,6 +233,19 @@ function getTopVideo(track){
             video=this.responseText
             //jQuery("#player").tubeplayer("cue", video);
             ytplist.push(video);
+            
+            var table=document.getElementById("songs");
+                var tr=document.createElement("tr");
+                    var td = document.createElement("td");
+                        var button=document.createElement("button");
+                            button.setAttribute("onclick", "addVideoById('"+video+"')")
+                            var txt=document.createTextNode(track["name"]+" - "+ track["artist"])
+
+                        button.appendChild(txt);
+                    td.appendChild(button);
+                tr.appendChild(td);
+            table.appendChild(tr);
+
 
             
         };
@@ -251,6 +269,7 @@ function loadVideos(){
                 track=tracks[i];
 
                 getTopVideo(track)
+
             };
         };
         xhr.send();
@@ -330,6 +349,10 @@ function addVideo(){
     var player=document.getElementById("myytplayer")
 
     player.loadVideoById(ytplist.shift())
+}
+function addVideoById(video){
+    var player=document.getElementById("myytplayer")
+    player.loadVideoById(video)
 }
 
 function onytplayerStateChange(newState) {
