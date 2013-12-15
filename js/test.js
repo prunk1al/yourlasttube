@@ -1,5 +1,5 @@
 
-
+var ytplist= new Array();
 
 function getArtistImage(artist){
     var xhr = new XMLHttpRequest();
@@ -226,7 +226,9 @@ function getTopVideo(track){
             // do something to response
             console.log(this.responseText);
             video=this.responseText
-            jQuery("#player").tubeplayer("cue", video);
+            //jQuery("#player").tubeplayer("cue", video);
+            ytplist.push(video);
+
             
         };
         var query='{"track":'+track["name"]+',"artist":'+track["artist"]+'}';
@@ -317,4 +319,22 @@ function getTrackVideo(track){
 };
 
 
+var ytplayer;
+function onYouTubePlayerReady(playerId) {
+      ytplayer = document.getElementById("myytplayer");
+      ytplayer.addEventListener("onStateChange", "onytplayerStateChange");
+      addVideo(ytplayer)
+    }
+
+function addVideo(){
+    var player=document.getElementById("myytplayer")
+
+    player.loadVideoById(ytplist.shift())
+}
+
+function onytplayerStateChange(newState) {
+   if (newState==0){
+    addVideo();
+   }
+}
 
