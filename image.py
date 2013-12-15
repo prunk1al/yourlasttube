@@ -54,13 +54,23 @@ def get_album_lastfm(params):
         return images
 
 
+def getLogoFromFanart(mbid):
+    url=tools.get_url('fanart','artist',mbid)
+    logging.error(url)        
+    j=tools.get_json(url)
+    if j is None:
+        return None
+    
+    for i in j:
+        try:
+            logo=j[i]['hdmusiclogo'][0]['url']+'/preview'
+        except:
+            try:
+                logo=j[i]['musiclogo'][0]['url']+'/preview'
+            except:
+                return None
 
-
-
-
-
-
-
+    return logo
 
 
 
@@ -186,16 +196,10 @@ def get_image(mbid,key=""):
         if url is not None:
             return url
         else:
-            url=tools.get_url('fanart','artist',mbid)
-            
-            j=tools.get_json(url)
-            if j is None:
+            logo=getLogoFromFanart(mbid)
+
+            if logo is None:
                 return None
-            for i in j:
-                try:
-                    logo=j[i]['musiclogo'][0]['url']+'/preview'
-                except:
-                    return None
 
             query=blobstore.BlobInfo.all().filter('filename =','logo_%s.png'%mbid)
             if int(query.count()) >=1:
