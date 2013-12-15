@@ -426,7 +426,7 @@ class xhrLogo(Handler):
         j=self.request.body
         data=json.loads(j)
         mbid=data[10:-1]
-        self.response.out.write(image.get_image(mbid,"logo"))
+        self.response.out.write(image.getLogoFromFanart(mbid))
 
 class xhrAlbumImage(Handler):
     def post(self):
