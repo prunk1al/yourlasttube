@@ -426,7 +426,13 @@ class xhrLogo(Handler):
         j=self.request.body
         data=json.loads(j)
         mbid=data[10:-1]
-        self.response.out.write(image.getLogoFromFanart(mbid))
+
+        cache=memcache.get("logo of %s"%mbid)
+        if cache is None:
+            cache=image.getLogoFromFanart(mbid)
+            memcache.set("logo of %s"%mbid, cache)
+        
+        self.response.out.write(cache)       
 
 class xhrAlbumImage(Handler):
     def post(self):
@@ -461,6 +467,13 @@ class xhrSimilar(Handler):
 class xhrFront(Handler):
     def get(self):
         self.render("xhrfront.html")
+    def post(self):
+        artist_name=self.request.get('artist')
+
+        artists=artist.search_artist(artist_name)
+        
+        if len(artists)==1:
+            self.redirect("/xhrArtist?mbid=%s"%artists[0].artist_mbid)
 
 class xhrTopArtists(Handler):
     def get(self):
@@ -493,6 +506,8 @@ class xhrFrontVideos(Handler):
 
         self.response.out.write(json.dumps(tracks))
 
+
+
 class xhrGetVideo(Handler):
 
     def post(self):
@@ -501,7 +516,13 @@ class xhrGetVideo(Handler):
         data=json.loads(j)
         tname=data[8:data.find(',')]
         artist=data[data.find(',')+9:-1]
-        self.response.out.write(track.get_video(artist,tname))
+
+        cache=memcache.get("video of %s %s"%(tname,artist))
+        if cache is None:
+            cache=track.get_video(artist,tname)
+            memcache.set("video of %s %s"%(tname,artist), cache)
+        
+        self.response.out.write(cache) 
 
 class xhrAlbum(Handler):
     def get(self):
@@ -539,7 +560,7 @@ class Worker(Handler):
         eval(function)
 
 
-app = webapp2.WSGIApplication([('/', MainPage),('/echonest',EchonestPage),('/lastfm',LastFmPage),('/deleteBlobs',deleteBlobs),('/artists',ArtistsPage),('/playlist',PlaylistPage),('/disam',DisambiguationPage),('/worker',Worker),
+app = webapp2.WSGIApplication([('/', xhrFront),('/echonest',EchonestPage),('/lastfm',LastFmPage),('/deleteBlobs',deleteBlobs),('/artists',ArtistsPage),('/playlist',PlaylistPage),('/disam',DisambiguationPage),('/worker',Worker),
                                ('/track', TrackPage),('/album',AlbumPage),('/artist', BandPage), 
                                ('/xhrArtist',xhrArtist),('/xhrFront', xhrFront),('/xhrAlbum',xhrAlbum),
                                ('/xhrLogo',xhrLogo),('/xhrAlbums', xhrAlbums),('/xhrAlbumImage', xhrAlbumImage),('/xhrSimilar', xhrSimilar),('/xhrTopArtists', xhrTopArtists),('/xhrFrontVideos', xhrFrontVideos),('/xhrGetVideo',xhrGetVideo),
