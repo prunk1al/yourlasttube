@@ -16,6 +16,26 @@ background-size: 100%;
 	position: relative;
 }
 
+table {
+  border-collapse: collapse;
+  background-color: black;
+  width: 425px;
+}
+table td, table th {
+  border: 1px solid white;
+}
+table tr:first-child th {
+  border-top: 0;
+}
+
+
+
+button {
+    background:none!important;
+    border:none; 
+    padding:0!important;
+    color:#FFFFFF;
+}
 -->
 </style>
 <head>
@@ -24,7 +44,10 @@ background-size: 100%;
  <script type="text/javascript" src="js/prettyPhoto/js/jquery.prettyPhoto.js"></script>
  <link rel="stylesheet" href="js/prettyPhoto/css/prettyPhoto.css" type="text/css" media="screen" />
  <!-- ENDS prettyPhoto -->
-<script type="text/javascript" src="js/test.js"></script>
+ <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+
+  <script type="text/javascript" src="js/test.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script>
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -44,21 +67,33 @@ background-size: 100%;
   <div id="wrap">
 
 
+    <h1><center><img id="logo" src="" width=300><center></h1><br>
 
-    <script type="text/javascript">getAlbumTracks("{{album}}")</script>
+   
 
-    <TABLE id="tracks">
+     <div id="ytapiplayer">
+      You need Flash player 8+ and JavaScript enabled to view this video.
+    </div>
+
+    <script type="text/javascript">
+
+    var params = { allowScriptAccess: "always" , bgcolor:"#cccccc", allowfullscreen:"true"};
+    var atts = { id: "myytplayer" };
+    swfobject.embedSWF("http://www.youtube.com/v/4SLBizx05Bo?enablejsapi=1&playerapiid=ytplayer", 
+     "ytapiplayer", "425", "356", "8", null, null, params, atts);
+
+    
+    </script>
+
+    <TABLE id="songs">
 
    </TABLE>
+
+    <script type="text/javascript">getAlbumTracks("{{album}}")</script>
 
  </div>
 
 
  
 
- <script type="text/javascript" charset="utf-8">
- function pretty(){
-  $("a[rel^='prettyPhoto']").prettyPhoto();
-});
- </script>
- <body>
+ </body>
