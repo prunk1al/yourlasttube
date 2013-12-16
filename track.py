@@ -191,10 +191,13 @@ def getAlbumTracks(mbid):
         if track_c > track_n:
             track_n=int(track_c)
             tracks=[]
-            artist=artist_mbid=r.getElementsByTagName("artist-credit")[0].getElementsByTagName("artist")[0].attributes.get("id").value
+            artist=r.getElementsByTagName("artist-credit")[0].getElementsByTagName("artist")[0].attributes.get("id").value
+            artistName=r.getElementsByTagName("artist-credit")[0].getElementsByTagName("artist")[0].childNodes[0].childNodes[0].nodeValue
             for t in r.getElementsByTagName("track"):
                 T={}
-                T["artist"]=artist
+                T["artist"]={}
+                T["artist"]["mbid"]=artist
+                T["artist"]["name"]=artistName
                 T["mbid"]=t.getElementsByTagName("recording")[0].attributes.get("id").value
                 T["name"]=t.getElementsByTagName("title")[0].childNodes[0].nodeValue
                 T["number"]=int(t.getElementsByTagName("position")[0].childNodes[0].nodeValue)
