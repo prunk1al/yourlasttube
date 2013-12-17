@@ -509,8 +509,11 @@ class xhrFrontVideos(Handler):
         tracks=[]
         i=1
         for d in data["tracks"]["track"]:
+            logging.error(d)
             track={}
-            track["artist"]=d["artist"]["name"]
+            track["artist"]={}
+            track["artist"]["name"]=d["artist"]["name"]
+            track["artist"]["mbid"]=d["artist"]["mbid"]
             track["name"]=d["name"]
             track["number"]=i
             if tracks not in tracks:
@@ -527,15 +530,15 @@ class xhrGetVideo(Handler):
     
         j=self.request.body
         data=json.loads(j)
-        tname=data[8:data.find(',')]
-        artist=data[data.find(',')+9:-1]
-
-        cache=memcache.get("video of %s %s"%(tname,artist))
-        if cache is None:
-            cache=track.get_video(artist,tname)
-            memcache.set("video of %s %s"%(tname,artist), cache)
         
-        self.response.out.write(cache) 
+        cache=None
+        #cache=memcache.get("video of %s %s"%(data["name"],data["artist"]["name"]))
+        if cache is None:
+            data["video"]=track.get_video(data["artist"]["name"],data["name"])
+  
+            memcache.set("video of %s %s"%(data["name"],data["artist"]["name"]), data)
+        
+        self.response.out.write(json.dumps(data)) 
 
 class xhrAlbum(Handler):
     def get(self):

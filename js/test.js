@@ -201,8 +201,7 @@ function getTopLogo(artist){
             if (image=="None"){
                 image="http://chart.apis.google.com/chart?chst=d_text_outline&chld=000000|38|h|FFFFFF|_|"+name;
             }
-            var table=document.getElementById("logos");
-                var tr=document.createElement("tr");
+            var tr=document.getElementById("logos");
                     var td =document.createElement("td");
                         var a=document.createElement("a");
                             a.href="xhrArtist?mbid="+artist["mbid"]
@@ -210,10 +209,10 @@ function getTopLogo(artist){
                                 img.src=image;
                                 img.id=artist["mbid"]
                                 img.alt=name
+                                img.style.width="85px";
                         a.appendChild(img)
                     td.appendChild(a)
                 tr.appendChild(td)
-            table.appendChild(tr)
             
             
         };
@@ -230,8 +229,11 @@ function getTopVideo(track){
         xhr.onload = function () {
             // do something to response
             console.log(this.responseText);
-            video=this.responseText
-            //jQuery("#player").tubeplayer("cue", video);
+            var j=JSON.parse(this.responseText);
+            video={}
+            video["ytid"]=j["video"]
+            video["mbid"]=j["artist"]["mbid"]
+            
             ytplist.push(video);
             
             var table=document.getElementById("songs");
@@ -240,12 +242,12 @@ function getTopVideo(track){
                     var td = document.createElement("td");
                         tr.setAttribute("class","tdsong")
                         var button=document.createElement("button");
-                            button.setAttribute("onclick", "addVideoById('"+video+"')")
+                            button.setAttribute("onclick", "parseVideo('"+video["ytid"]+"','"+video["mbid"]+"')")
                             if(track["number"]){
-                                var txt=document.createTextNode(track["number"]+" - "+track["name"]+" - "+ track["artist"])
+                                var txt=document.createTextNode(track["number"]+" - "+track["name"]+" - "+ track["artist"]["name"])
                             }
                             else{
-                                var txt=document.createTextNode(track["name"]+" - "+ track["artist"])
+                                var txt=document.createTextNode(track["name"]+" - "+ track["artist"]["name"])
                             }
                         button.appendChild(txt);
                     td.appendChild(button);
@@ -255,9 +257,7 @@ function getTopVideo(track){
 
             
         };
-        var query='{"track":'+track["name"]+',"artist":'+track["artist"]+'}';
-        console.log(query)
-        xhr.send(JSON.stringify(query));
+        xhr.send(JSON.stringify(track));
 
 };
 
@@ -374,16 +374,109 @@ function getTrackVideo(track){
 };
 
 
+function changeArtist(mbid){
+    var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/xhrLogo', true);
+        xhr.onload = function () {
+            // do something to response
+            console.log(this.responseText);
+            var image=this.responseText
+            
+
+            if (image=="None"){
+                image="http://chart.apis.google.com/chart?chst=d_text_outline&chld=000000|38|h|FFFFFF|_|"+name;
+            }
+            
+          
+            var img=document.getElementById("topLogo");
+                    img.src=image
+                    img.style.width="250px";
+            
+            
+        };
+        var query='{"artist":'+mbid+'}';
+        console.log(query)
+        xhr.send(JSON.stringify(query));
+
+    getSimilarFront(mbid);
+};
+
+function getSimilarFront(mbid){
+    var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/xhrSimilar', true);
+        xhr.onload = function () {
+            // do something to response
+
+
+            console.log(this.responseText);
+            var similars=JSON.parse(this.responseText);
+            
+            var table=document.getElementById("similarLogos")
+            console.log(table.rows.length);
+
+            for(var i=table.rows.length-1; i >=0; i--){
+                table.deleteRow(i);
+            }
+
+
+            for (var i = similars.length - 1; i >= 0; i--) {
+                similar=similars[i];
+
+                getSimilarLogo(similar["mbid"],similar["name"])
+            };
+            
+
+
+        };
+        var query='{"artist":'+mbid+'}';
+        console.log("similar")
+        xhr.send(JSON.stringify(query));
+    
+    };
+function getSimilarLogo(artist, name){
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/xhrLogo', true);
+        xhr.onload = function () {
+            // do something to response
+            console.log(this.responseText);
+            var image=this.responseText
+
+           
+            if (image=="None"){
+                image="http://chart.apis.google.com/chart?chst=d_text_outline&chld=000000|38|h|FFFFFF|_|"+name;
+            }
+            var table=document.getElementById("similarLogos")
+            var tr=document.createElement("tr")
+            var a=document.createElement("a");
+                a.href="xhrArtist?mbid="+artist
+            var img=document.createElement("img");
+                img.src=image;
+                img.id=artist
+                img.alt=name
+                img.style.width="200px"
+            a.appendChild(img)
+            tr.appendChild(a);
+            table.appendChild(tr)
+            
+        };
+        var query='{"artist":'+artist+'}';
+        console.log(query)
+        xhr.send(JSON.stringify(query));
+    
+    }
+
+
 var player;
 function onYouTubeIframeAPIReady() {
         player = new YT.Player('player', {
           height: '390',
-          width: '640',
+          width: '425',
+            events: {
+                'onStateChange': onPlayerStateChange,
+                "onReady": addVideo
+            }
         });
-    
-        player.addEventListener("onStateChange", "onplayerStateChange");
-        player.addEventListener("onReady", "addVideo");
-   
+ 
 }
 
 function addVideo(){
@@ -393,14 +486,25 @@ function addVideo(){
         window.setTimeout(addVideo(),1000)
         return;
     }
-    player.loadVideoById(ytplist.shift(),0,"large")
+    var video=ytplist.shift()
+    console.log(video);
+    addVideoById(video)
+    
 }
-function addVideoById(video){
-    player.loadVideoById(video, 0, "large")
+function parseVideo(ytid, mbid){
+    video={"ytid":ytid,"mbid":mbid}
+    addVideoById(video)
 }
 
-function onPlayerStateChange(newState) {
-   if (newState==0){
+function addVideoById(video){
+    
+    player.loadVideoById(video["ytid"], 0, "large")
+    changeArtist(video["mbid"]);
+}
+
+function onPlayerStateChange(event) {
+
+   if (event.data==0){
     addVideo();
    }
 }

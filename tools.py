@@ -44,7 +44,7 @@ def get_url(server,service,param):
             params="api_key="+API_KEY+"&format=json&limit=50"
         elif service=='toptracks':
             SERVICE='?method=chart.gettoptracks&'
-            params="api_key="+API_KEY+"&format=json&limit=10"
+            params="api_key="+API_KEY+"&format=json&limit=5"
         elif service=='toptags':
             SERVICE='?method=chart.gettoptags&'
             params="api_key="+API_KEY+"&format=json&limit=50"
