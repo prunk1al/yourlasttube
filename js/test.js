@@ -3,7 +3,7 @@ var ytplist= new Array();
 
 function getArtistImage(artist){
     var xhr = new XMLHttpRequest();
-        xhr.open('POST', '/xhrArtist', true);
+        xhr.open('POST', '/xhrArtistImage', true);
         xhr.onload = function () {
             // do something to response
 
@@ -241,7 +241,7 @@ function getTopVideo(track){
                         tr.setAttribute("class","tdsong")
                         var button=document.createElement("button");
                             button.setAttribute("onclick", "addVideoById('"+video+"')")
-                            var txt=document.createTextNode(track["name"]+" - "+ track["artist"])
+                            var txt=document.createTextNode(track["number"]+" - "+track["name"]+" - "+ track["artist"])
 
                         button.appendChild(txt);
                     td.appendChild(button);
@@ -293,6 +293,7 @@ function getAlbumTracks(album){
                 data={}
                 data["artist"]=track["artist"]["name"]
                 data["name"]=track["name"]
+                data["number"]=track["number"]
                 getTopVideo(data)
                
 
