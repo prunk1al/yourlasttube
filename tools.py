@@ -87,6 +87,10 @@ def get_url(server,service,param):
             SERVICE='/ws/2/release?'
             params='release-group='+mbid+'&inc=recordings+artist-credits'
 
+        elif service=='tracksj':
+            SERVICE='/ws/2/release?'
+            params='release-group='+mbid+'&inc=recordings+artist-credits&fmt=json'
+
         elif service=='recording':
             SERVICE='/ws/2/recording/'
             params=mbid+'?inc=artists&fmt=json'
