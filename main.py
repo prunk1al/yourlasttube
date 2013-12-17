@@ -429,7 +429,7 @@ class xhrLogo(Handler):
 
         cache=memcache.get("logo of %s"%mbid)
         if cache is None:
-            cache=image.getLogoFromFanart(mbid)
+            cache=image.get_image(mbid,"logo")
             memcache.set("logo of %s"%mbid, cache)
         
         self.response.out.write(cache)       
