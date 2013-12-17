@@ -577,6 +577,7 @@ class xhrPlaylist(Handler):
                 logging.error(s)
                 track={}
                 track["artist"]=s["artist_name"]
+                track["Ambid"]=s["artist_foreign_ids"][0]["foreign_id"][19:]
                 track["name"]=s["title"]
                 tracks.append(track)
 
