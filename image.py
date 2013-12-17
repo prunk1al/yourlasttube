@@ -309,12 +309,22 @@ def get_image(mbid,key=""):
             except:
                 try:
                     
-                    url="http://www.musicbrainz.org/ws/2/release-group/"+mbid+"?inc=releases"
-                    xml=tools.get_xml(url)
-                                       
+                    url="http://coverartarchive.org/release-group/%s"%mbid
+                    j=tools.get_json(url)
+                    logging.error(j)                  
+                    
+                    file_name = files.blobstore.create(mime_type='image/png',_blobinfo_uploaded_filename='album_%s.png'%mbid)
+                    url= j["images"][0]["thumbnails"]["small"]
+                    logging.error(url)
+                    image=urllib2.urlopen(url).read()
+                    tools.write_blob(image,file_name)
+                    
+                    
+                    """
                     
                     releases=xml.getElementsByTagName('release')
                     logging.error(releases)
+                    
                     for i in releases:
                         
                             release=i.attributes.get('id').value
@@ -330,7 +340,7 @@ def get_image(mbid,key=""):
                             tools.write_blob(image,file_name)
                             return url
 
-
+                    """
                 except:
                     url=None
   
