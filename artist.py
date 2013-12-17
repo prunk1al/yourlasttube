@@ -113,10 +113,10 @@ def getAlbumFromMBrainz(mbid):
                     album["name"]=rg.getElementsByTagName("title")[0].childNodes[0].nodeValue
                     album["date"]=rg.getElementsByTagName("first-release-date")[0].childNodes[0].nodeValue
                     albums.append(album)
-                    logging.error(albums)
+                    
             except:
                 continue
-
+    logging.error(albums)
     logging.error("END OF Artist_ALBUMS")
     albums.sort(key=lambda tup: tup["date"], reverse=True)
 
