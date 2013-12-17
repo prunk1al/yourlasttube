@@ -236,7 +236,9 @@ function getTopVideo(track){
             
             var table=document.getElementById("songs");
                 var tr=document.createElement("tr");
+                        tr.setAttribute("class","trsong")
                     var td = document.createElement("td");
+                        tr.setAttribute("class","tdsong")
                         var button=document.createElement("button");
                             button.setAttribute("onclick", "addVideoById('"+video+"')")
                             var txt=document.createTextNode(track["name"]+" - "+ track["artist"])
@@ -275,8 +277,37 @@ function loadVideos(){
         xhr.send();
 };
 
-
 function getAlbumTracks(album){
+    var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/xhrGetAlbumTracks', true);
+        xhr.onload = function () {
+            // do something to response
+           console.log(this.responseText);
+           var tracks=JSON.parse(this.responseText);
+            
+           
+
+            for (var i = 0; i <  tracks.length ; i++) {
+                
+                track=tracks[i]
+                data={}
+                data["artist"]=track["artist"]["name"]
+                data["name"]=track["name"]
+                getTopVideo(data)
+               
+
+            };
+            console.log(track["artits"]);
+            getArtistImage(track["artist"]["mbid"])
+            getBandLogo(track["artist"]["mbid"])
+
+        };
+        var query={"album":album};
+        console.log(query)
+        xhr.send(JSON.stringify(query));
+};
+
+function getAlbumTracks2(album){
     var xhr = new XMLHttpRequest();
         xhr.open('POST', '/xhrGetAlbumTracks', true);
         xhr.onload = function () {
@@ -338,26 +369,44 @@ function getTrackVideo(track){
 };
 
 
-var ytplayer;
-function onYouTubePlayerReady(playerId) {
-      ytplayer = document.getElementById("myytplayer");
-      ytplayer.addEventListener("onStateChange", "onytplayerStateChange");
-      addVideo(ytplayer)
-    }
+var player;
+function onYouTubeIframeAPIReady() {
+        player = new YT.Player('player', {
+          height: '390',
+          width: '640',
+        });
+    
+        player.addEventListener("onStateChange", "onplayerStateChange");
+        player.addEventListener("onReady", "addVideo");
+   
+}
 
 function addVideo(){
-    var player=document.getElementById("myytplayer")
 
-    player.loadVideoById(ytplist.shift())
+    if(ytplist.length<=0){
+        
+        window.setTimeout(addVideo(),1000)
+        return;
+    }
+    player.cueVideoById(ytplist.shift(),0,"large")
 }
 function addVideoById(video){
-    var player=document.getElementById("myytplayer")
-    player.loadVideoById(video)
+    player.loadVideoById(video, 0, "large")
 }
 
-function onytplayerStateChange(newState) {
+function onPlayerStateChange(newState) {
    if (newState==0){
     addVideo();
    }
+}
+
+function createIframe(){
+    // 2. This code loads the IFrame Player API code asynchronously.
+      var tag = document.createElement('script');
+
+      tag.src = "https://www.youtube.com/iframe_api";
+      var firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
 }
 
