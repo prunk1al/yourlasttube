@@ -139,13 +139,13 @@ def get_url(server,service,param):
     return url
 
 def get_xml(url):
-
+    
     xml=memcache.get(url)
     if xml is not None:
         return xml
 
     #time.sleep(1) 
-    logging.debug(url)
+    logging.error(url)
     try:
         page=urlfetch.fetch(url,deadline=10)
     
@@ -161,10 +161,11 @@ def get_xml(url):
     return xml
 
 def get_json(url):
+
     p=memcache.get(url)
     if p is  None:
         #time.sleep(1)
-        logging.debug(url)
+        logging.error(url)
         try:
             result = urlfetch.fetch(url)
         
