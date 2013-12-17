@@ -66,7 +66,7 @@ def get_playlist_from_Home(playlist_name):
 	return None
 
 
-
+"""
 def get_echonest_playlist(tipo,mbid):
 	song=[]
 	playlist_name="%s %s playlist"%(tipo,mbid)
@@ -109,7 +109,12 @@ def get_echonest_playlist(tipo,mbid):
 	p.put()
 	memcache.set(playlist_name,playlist)
 	return playlist
-
+"""
+def get_echonest_playlist(tipo,mbid):
+	if tipo=="artist":
+		url=tools.get_url("echonest","artist",mbid)
+		j=tools.get_json(url)
+		return j["response"]["songs"]
 
 
 

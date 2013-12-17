@@ -408,6 +408,7 @@ class EchonestPage(Handler):
             logging.error(genres)
             self.render("last.html",genres=genres,key="echonest")
 
+
 class xhrArtist(Handler):
     def get(self):
         mbid=self.request.get('mbid') 
@@ -564,8 +565,22 @@ class xhrGetTrackVideo(Handler):
 
 class xhrPlaylist(Handler):
     def get(self):
-        mbid=self.requet.get("mbid")
+        mbid=self.request.get("mbid")
+        tipo=self.request.get("tipo")
 
+        if tipo=="artist":
+
+            songs=playlists.get_echonest_playlist(tipo,mbid)
+            tracks=[]
+            logging.error(songs)
+            for s in songs:
+                logging.error(s)
+                track={}
+                track["artist"]=s["artist_name"]
+                track["name"]=s["title"]
+                tracks.append(track)
+
+        self.render("xhrPlaylist.html", tracks=tracks)
 
 class Worker(Handler):
     

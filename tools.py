@@ -58,7 +58,6 @@ def get_url(server,service,param):
             
 
     elif server=='youtube':
-
         artist,song=param[0],param[1]
         API_KEY=YOUTUBE_API
         SERVER='gdata.youtube.com'
@@ -66,31 +65,26 @@ def get_url(server,service,param):
         params=artist+"+"+song+"+official+video&max-results=1&v=2&format=5&alt=json&key="+API_KEY
         params=params.replace(" ","+")
 
+
     elif server=='musicbrainz':
         SERVER = 'www.musicbrainz.org' 
         mbid=param
-
         if service=='artist':
             SERVICE = '/ws/2/artist/?'         
             x = 'alias:"'+mbid+'"OR artist:"'+mbid+'"'
             params=urllib.urlencode({"query":x.encode('utf8')}).replace("OR+","OR%20")
-
         elif service=="artist_mbid":
             SERVICE="/ws/2/artist/"
             params=mbid+"?inc=release-groups"
-            
         elif service=='album':
             SERVICE='/ws/2/release-group?'
             params="artist="+mbid+"&type=album"
-
         elif service=='tracks':
             SERVICE='/ws/2/release?'
             params='release-group='+mbid+'&inc=recordings+artist-credits'
-
         elif service=='tracksj':
             SERVICE='/ws/2/release?'
             params='release-group='+mbid+'&inc=recordings+artist-credits&fmt=json'
-
         elif service=='recording':
             SERVICE='/ws/2/recording/'
             params=mbid+'?inc=artists&fmt=json'
@@ -100,20 +94,18 @@ def get_url(server,service,param):
         SERVER='fanart.tv'
         API_KEY=FARNART_API
         mbid=param
-
         if service=='artist':
             SERVICE='/webservice/artist/'
             params=API_KEY+'/'+mbid+'/json/all/1/1/'
-
         if service=='album':
             SERVICE='/webservice/album/'
             params=API_KEY+'/'+mbid+'/xml/all/1/1/'
+
 
     elif server=='echonest':
         SERVER='developer.echonest.com'
         API_KEY=ECHONEST_API
         mbid=param
-
         if service=="similar":
             SERVICE='/api/v4/artist/similar?'
             params='api_key='+API_KEY+'&id=musicbrainz:artist:'+mbid+"&format=json&results=5&start=0&bucket=id:musicbrainz"
@@ -132,8 +124,9 @@ def get_url(server,service,param):
         if service=="genre":
             SERVICE='/api/v4/playlist/static?'
             params='api_key='+API_KEY+'&format=json&results=50&description='+mbid+'&type=artist-description&artist_min_familiarity=0.7&dmca=true'
-
-    
+        if service=="artist":
+            SERVICE='/api/v4/playlist/static?'
+            params='api_key='+API_KEY+'&format=json&results=50&artist_id=musicbrainz:artist:'+mbid+'&type=artist&bucket=id:musicbrainz'
 
   
     url ='http://%s%s%s' % (SERVER,SERVICE,params) 
