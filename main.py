@@ -409,6 +409,11 @@ class EchonestPage(Handler):
             self.render("last.html",genres=genres,key="echonest")
 
 class xhrArtist(Handler):
+    def get(self):
+        mbid=self.request.get('mbid') 
+        self.render("xhrArtist.html",artist=mbid)
+
+class xhrArtistImage(Handler):
     def post(self):
         j=self.request.body
         data=json.loads(j)
@@ -417,9 +422,7 @@ class xhrArtist(Handler):
         logging.error(image.get_image(mbid,"bg"))
         self.response.out.write(image.get_image(mbid,"bg"))
 
-    def get(self):
-        mbid=self.request.get('mbid') 
-        self.render("xhrArtist.html",artist=mbid)
+   
 
 class xhrLogo(Handler):
     def post(self):
@@ -503,13 +506,15 @@ class xhrFrontVideos(Handler):
         data=playlists.getTopTracks()
 
         tracks=[]
+        i=1
         for d in data["tracks"]["track"]:
             track={}
             track["artist"]=d["artist"]["name"]
             track["name"]=d["name"]
+            track["number"]=i
             if tracks not in tracks:
                 tracks.append(track)
-
+                i+=1
 
         self.response.out.write(json.dumps(tracks))
 
@@ -557,6 +562,11 @@ class xhrGetTrackVideo(Handler):
 
         self.response.out.write(track.getTrackVideo(mbid))
 
+class xhrPlaylist(Handler):
+    def get(self):
+        mbid=self.requet.get("mbid")
+
+
 class Worker(Handler):
     
 
@@ -569,7 +579,7 @@ class Worker(Handler):
 
 app = webapp2.WSGIApplication([('/', xhrFront),('/echonest',EchonestPage),('/lastfm',LastFmPage),('/deleteBlobs',deleteBlobs),('/artists',ArtistsPage),('/playlist',PlaylistPage),('/disam',DisambiguationPage),('/worker',Worker),
                                ('/track', TrackPage),('/album',AlbumPage),('/artist', BandPage), 
-                               ('/xhrArtist',xhrArtist),('/xhrFront', xhrFront),('/xhrAlbum',xhrAlbum),
+                               ('/xhrArtist', xhrArtist),('/xhrFront', xhrFront),('/xhrAlbum',xhrAlbum),('/xhrPlaylist',xhrPlaylist),
                                ('/xhrLogo',xhrLogo),('/xhrAlbums', xhrAlbums),('/xhrAlbumImage', xhrAlbumImage),('/xhrSimilar', xhrSimilar),('/xhrTopArtists', xhrTopArtists),('/xhrFrontVideos', xhrFrontVideos),('/xhrGetVideo',xhrGetVideo),
-                               ('/xhrGetAlbumTracks',xhrGetAlbumTracks),('/xhrGetTrackVideo',xhrGetTrackVideo)
+                               ('/xhrGetAlbumTracks',xhrGetAlbumTracks),('/xhrGetTrackVideo',xhrGetTrackVideo),('/xhrArtistImage',xhrArtistImage)
                                ], debug=True)
