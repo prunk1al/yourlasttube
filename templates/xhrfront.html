@@ -22,23 +22,33 @@ body{
 }
 
 #player{
-  position: absolute;
   width: 425px;
   right:260px;
 }
 
+#songs{
+  border-collapse: collapse;
+  background-color: black;
+  width: 425px;
+  border: 1px solid white;
+}
+.tdsong {
+  border: 1px solid white;
+}
+
 #topArtists{
+  top: 200px;
   width: 210px;
   position: absolute;
-  right: 40px;
+  right: 30%;
   
 }
 
 button {
-    background:none!important;
-    border:none; 
-    padding:0!important;
-    color:#FFFFFF;
+  background:none!important;
+  border:none; 
+  padding:0!important;
+  color:#FFFFFF;
 }
 -->
 </style>
@@ -89,51 +99,36 @@ button {
 
     <div id="contents">
 
-    <div id="player">
+     <div id="player"></div>
+     <script type="text/javascript">loadVideos();</script>
+     <script>createIframe()</script>
 
-    <script type="text/javascript">
-    loadVideos();
-    </script>
 
-    <div id="ytapiplayer">
-      You need Flash player 8+ and JavaScript enabled to view this video.
-    </div>
+     <table id="songs">
+     </table>
 
-    <script type="text/javascript">
+   </div>
 
-    var params = { allowScriptAccess: "always" , bgcolor:"#cccccc"};
-    var atts = { id: "myytplayer" };
-    swfobject.embedSWF("http://www.youtube.com/v/4SLBizx05Bo?enablejsapi=1&playerapiid=ytplayer", 
-     "ytapiplayer", "425", "356", "8", null, null, params, atts);
 
-    
-    </script>
 
-    <table id="songs">
+
+
+   <div id="topArtists">
+    <table id="logos">
     </table>
-
   </div>
+  <script type="text/javascript">getTopArtists();</script>
 
-
-
-
-
-    <div id="topArtists">
-      <table id="logos">
-      </table>
-    </div>
-    <script type="text/javascript">getTopArtists();</script>
-
-  </div>
+</div>
 </div>
 
-  <div id="float">
-    <script type="text/javascript"><!--
-    google_ad_client = "ca-pub-9218229247285850";
-    /* musica */
-    google_ad_slot = "6610465088";
-    google_ad_width = 120;
-    google_ad_height = 240;
+<div id="float">
+  <script type="text/javascript"><!--
+  google_ad_client = "ca-pub-9218229247285850";
+  /* musica */
+  google_ad_slot = "6610465088";
+  google_ad_width = 120;
+  google_ad_height = 240;
     //-->
     </script>
     <script type="text/javascript"

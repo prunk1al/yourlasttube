@@ -71,19 +71,8 @@ button {
 
    
 
-     <div id="ytapiplayer">
-      You need Flash player 8+ and JavaScript enabled to view this video.
-    </div>
-
-    <script type="text/javascript">
-
-    var params = { allowScriptAccess: "always" , bgcolor:"#cccccc", allowfullscreen:"true"};
-    var atts = { id: "myytplayer" };
-    swfobject.embedSWF("http://www.youtube.com/v/4SLBizx05Bo?enablejsapi=1&playerapiid=ytplayer", 
-     "ytapiplayer", "425", "356", "8", null, null, params, atts);
-
-    
-    </script>
+     <div id="player"></div>
+    <script>createIframe()</script>
 
     <TABLE id="songs">
 
