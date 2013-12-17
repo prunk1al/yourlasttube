@@ -168,7 +168,7 @@ def get_hottness(tracks):
         urls.append(hottness_url)
     return async.get_urls(urls,"videos",tracks)
 
-
+"""
 def getAlbumTracks(mbid):
 
     tracks=memcache.get('get_tracks: %s'%mbid)
@@ -187,6 +187,7 @@ def getAlbumTracks(mbid):
     track_n=0
     for r in release:
         
+        medium=int(r.getElementsByTagName("medium")[0].getElementsByTagName("position")[0].childNodes[0].nodeValue)
         track_c=r.getElementsByTagName("track-list")[0].attributes.get("count").value
         if track_c > track_n:
             track_n=int(track_c)
@@ -200,10 +201,38 @@ def getAlbumTracks(mbid):
                 T["artist"]["name"]=artistName
                 T["mbid"]=t.getElementsByTagName("recording")[0].attributes.get("id").value
                 T["name"]=t.getElementsByTagName("title")[0].childNodes[0].nodeValue
-                T["number"]=int(t.getElementsByTagName("position")[0].childNodes[0].nodeValue)
-
+                T["number"]=int(t.getElementsByTagName("position")[0].childNodes[0].nodeValue)+(medium*100)
                 tracks.append(T)
     logging.error(tracks)
+    return tracks
+"""
+def getAlbumTracks(mbid):
+    url=tools.get_url('musicbrainz','tracksj',mbid)
+    logging.error(url)
+    j=tools.get_json(url)
+    tracks=[]
+   
+    max=0
+    temp=0
+    for i in range(len(j["releases"])):
+
+        if len(j["releases"][i]["media"]) > temp:
+            temp=len(j["releases"][i]["media"])
+            max=i
+
+    logging.error(max)
+    for r in range(len(j["releases"][max]["media"])):
+        for track in j["releases"][max]["media"][r]["tracks"]:
+            logging.error(track)
+            T={}
+            T["artist"]={}
+            T["artist"]["mbid"]=track["artist-credit"][0]["artist"]["id"]
+            T["artist"]["name"]=track["artist-credit"][0]["artist"]["name"]
+            T["mbid"]=track["id"]
+            T["name"]=track["title"]
+            T["number"]=int(track["number"])+((r+1)*100)
+            tracks.append(T)
+
     return tracks
 
 def getTrackVideo(mbid):
