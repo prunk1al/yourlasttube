@@ -68,22 +68,38 @@ button {
   })();
 
   </script>
-  <link type="text/css" rel="stylesheet" media="screen, projection" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/black-tie/jquery-ui.css" />
+  <link type="text/css" rel="stylesheet" media="screen, projection" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/themes/black-tie/jquery-ui.css" />
   <link type="text/css" rel="stylesheet" media="screen, projection" href="js/css/youtube-player.css" />
 
-
-
-  <meta name="description" content="Best music Videos">
-  <meta name="keywords" content="music videos,youtube music, music tube, music video downloads,youtube free music videos,free youtube music videos,free music videos on youtube,free music videos at youtube,children s music videos youtube,utube music videos">
-</head>
-
-
-<body>
-  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
 
   <script type="text/javascript" src="js/test.js"></script>
   <script src="http://ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script>
 
+  <meta name="description" content="Best music Videos">
+  <meta name="keywords" content="music videos,youtube music, music tube, music video downloads,youtube free music videos,free youtube music videos,free music videos on youtube,free music videos at youtube,children s music videos youtube,utube music videos">
+
+
+<script>
+  $(function() {
+    $( "#dialog" ).dialog({
+      width: 700
+      });
+  });
+  </script>
+</head>
+
+
+<body>
+   
+  {%if artists is not none%}
+  <div id="dialog" title="Disambiguation">
+    {%for artist in artists%}
+       <a href="/xhrArtist?mbid={{artist.mbid}}">{{artist.name}}</a> <font style="padding-left:5em"> Pais: {{artist.country}} </font></p>
+    {%endfor%}
+  </div>
+  {%endif%}
 
 
   <div id="wrap">
