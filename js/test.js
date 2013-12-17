@@ -241,8 +241,12 @@ function getTopVideo(track){
                         tr.setAttribute("class","tdsong")
                         var button=document.createElement("button");
                             button.setAttribute("onclick", "addVideoById('"+video+"')")
-                            var txt=document.createTextNode(track["number"]+" - "+track["name"]+" - "+ track["artist"])
-
+                            if(track["number"]){
+                                var txt=document.createTextNode(track["number"]+" - "+track["name"]+" - "+ track["artist"])
+                            }
+                            else{
+                                var txt=document.createTextNode(track["name"]+" - "+ track["artist"])
+                            }
                         button.appendChild(txt);
                     td.appendChild(button);
                 tr.appendChild(td);
@@ -389,7 +393,7 @@ function addVideo(){
         window.setTimeout(addVideo(),1000)
         return;
     }
-    player.cueVideoById(ytplist.shift(),0,"large")
+    player.loadVideoById(ytplist.shift(),0,"large")
 }
 function addVideoById(video){
     player.loadVideoById(video, 0, "large")
