@@ -249,6 +249,7 @@ def search_artist(artist_name):
         return [data]
     
     url=tools.get_url('musicbrainz','artist',artist_name)
+    logging.error(url)
     xml=tools.get_xml(url)
     parsed=xml.getElementsByTagName("artist")
     
@@ -263,17 +264,24 @@ def search_artist(artist_name):
     else:
         
         for a in parsed:
-        
-            mbidId=a.attributes.get("id").value
-            name=a.getElementsByTagName("name")[0].childNodes[0].nodeValue
+            artist={}
+
+            artist["mbid"]=a.attributes.get("id").value
+            artist["name"]=a.getElementsByTagName("name")[0].childNodes[0].nodeValue
+            try:
+                artist["country"]=a.getElementsByTagName("area")[0].getElementsByTagName("name")[0].childNodes[0].nodeValue
+            except:
+                artist["country"]=""
 
             try:
                 disambiguation=a.getElementsByTagName("disambiguation")[0].childNodes[0].nodeValue
             except:
                 disambiguation=" "
             
-            artist_data=Class.Artists(artist_name=name, artist_mbid=mbidId, disambiguation=disambiguation, letter=name[0])
-            artists.append(artist_data)
+            #artist_data=Class.Artists(artist_name=name, artist_mbid=mbidId, disambiguation=disambiguation, letter=name[0])
+            
+
+            artists.append(artist)
             
     
 
