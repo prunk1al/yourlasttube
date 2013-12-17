@@ -465,8 +465,13 @@ class xhrSimilar(Handler):
         self.response.out.write(json.dumps(similar))
 
 class xhrFront(Handler):
+    def renderFront(self, artists=None):
+        self.render("xhrfront.html",artists=artists)
+
     def get(self):
-        self.render("xhrfront.html")
+        self.renderFront()
+
+
     def post(self):
         artist_name=self.request.get('artist')
 
@@ -474,6 +479,8 @@ class xhrFront(Handler):
         
         if len(artists)==1:
             self.redirect("/xhrArtist?mbid=%s"%artists[0].artist_mbid)
+        else:
+            self.renderFront(artists)
 
 class xhrTopArtists(Handler):
     def get(self):
