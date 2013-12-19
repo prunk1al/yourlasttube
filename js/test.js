@@ -235,7 +235,7 @@ function getTopVideo(track){
             video["mbid"]=j["artist"]["mbid"]
             
             ytplist.push(video);
-            
+            /*
             var table=document.getElementById("songs");
                 var tr=document.createElement("tr");
                         tr.setAttribute("class","trsong")
@@ -253,7 +253,7 @@ function getTopVideo(track){
                     td.appendChild(button);
                 tr.appendChild(td);
             table.appendChild(tr);
-
+            */
 
             
         };
@@ -398,8 +398,79 @@ function changeArtist(mbid){
         console.log(query)
         xhr.send(JSON.stringify(query));
 
+    getArtistInfo(mbid)
+    getArtistTags(mbid)
     getSimilarFront(mbid);
+    getytTopImages(ytplist)
 };
+
+function getytTopImages(ytlist){
+    var div=document.getElementById("ytImages")
+    for (var i =div.childNodes.length - 1; i >= 0; i--) {
+       div.removeChild(div.childNodes[i])
+    };
+
+    for (var i = 0; i < ytlist.length; i++) {
+        var img=document.createElement("img")
+            img.src="http://img.youtube.com/vi/"+ytlist[i]["ytid"]+"/0.jpg"
+            img.style.width="85px"
+            img.setAttribute("onclick","parseVideo('"+ytlist[i]["ytid"]+"', '"+ ytlist[i]["mbid"]+"')")
+        div.appendChild(img)
+    };
+}
+
+function getArtistTags(mbid){
+     var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/xhrArtistTags', true);
+        xhr.onload = function () {
+            // do something to response
+
+
+            console.log(this.responseText);
+            var tags=JSON.parse(this.responseText)
+            var tl=tags["tags"]
+            var p=document.getElementById("artistTags");
+            for (var i=tl.length - 1; i >= 0; i--) {
+            console.log(tl[i])
+                var a=document.createElement("a")
+                    a.href=tl[i]
+                    a.appendChild(document.createTextNode(tl[i]))
+                p.appendChild(a)
+                p.appendChild(document.createTextNode("    "))
+            };
+
+
+        };
+        var query={"artist":mbid};
+        console.log("artistInfo")
+        xhr.send(JSON.stringify(query));
+    
+    };
+
+
+function getArtistInfo(mbid){
+     var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/xhrArtistInfo', true);
+        xhr.onload = function () {
+            // do something to response
+
+
+            console.log(this.responseText);
+            var p=document.getElementById("artistInfo")
+            if (p.childNodes.length>1){
+                p.removeChild(p.childNodes[1]) 
+            }  
+            txt=document.createTextNode(this.responseText)
+            p.appendChild(txt)
+           
+
+
+        };
+        var query={"artist":mbid};
+        console.log("artistInfo")
+        xhr.send(JSON.stringify(query));
+    
+    };
 
 function getSimilarFront(mbid){
     var xhr = new XMLHttpRequest();
@@ -492,6 +563,11 @@ function addVideo(){
     
 }
 function parseVideo(ytid, mbid){
+    for (var i =ytplist.length - 1; i >= 0; i--) {
+       if(ytplist[i]["ytid"]==ytid){
+        ytplist.splice(i,1)
+       }
+    };
     video={"ytid":ytid,"mbid":mbid}
     addVideoById(video)
 }

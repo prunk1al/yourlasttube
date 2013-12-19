@@ -566,6 +566,23 @@ class xhrGetTrackVideo(Handler):
 
         self.response.out.write(track.getTrackVideo(mbid))
 
+class xhrGetArtistInfo(Handler):
+    def post(self):
+        j=self.request.body
+        data=json.loads(j)
+        mbid=data["artist"]
+
+        self.response.out.write(artist.getArtistInfo(mbid))
+
+class xhrGetArtistTags(Handler):
+    def post(self):
+        j=self.request.body
+        data=json.loads(j)
+        mbid=data["artist"]
+        tags={"tags":artist.getArtistTags(mbid)}
+        logging.error(tags)
+        self.response.out.write(json.dumps(tags))
+
 class xhrPlaylist(Handler):
     def get(self):
         mbid=self.request.get("mbid")
@@ -600,5 +617,5 @@ app = webapp2.WSGIApplication([('/', xhrFront),('/echonest',EchonestPage),('/las
                                ('/track', TrackPage),('/album',AlbumPage),('/artist', BandPage), 
                                ('/xhrArtist', xhrArtist),('/xhrFront', xhrFront),('/xhrAlbum',xhrAlbum),('/xhrPlaylist',xhrPlaylist),
                                ('/xhrLogo',xhrLogo),('/xhrAlbums', xhrAlbums),('/xhrAlbumImage', xhrAlbumImage),('/xhrSimilar', xhrSimilar),('/xhrTopArtists', xhrTopArtists),('/xhrFrontVideos', xhrFrontVideos),('/xhrGetVideo',xhrGetVideo),
-                               ('/xhrGetAlbumTracks',xhrGetAlbumTracks),('/xhrGetTrackVideo',xhrGetTrackVideo),('/xhrArtistImage',xhrArtistImage)
+                               ('/xhrGetAlbumTracks',xhrGetAlbumTracks),('/xhrGetTrackVideo',xhrGetTrackVideo),('/xhrArtistImage',xhrArtistImage),('/xhrArtistInfo',xhrGetArtistInfo),('/xhrArtistTags',xhrGetArtistTags)
                                ], debug=True)

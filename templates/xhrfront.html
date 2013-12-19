@@ -39,7 +39,7 @@ body{
   position: absolute;
   top:190px;
   right:10%;
-   
+
   
 }
 
@@ -49,6 +49,12 @@ button {
   padding:0!important;
   color:#FFFFFF;
 }
+
+#accordion-resizer {
+
+    width: 421px;
+    height: 90px;
+  }
 -->
 </style>
 <html>
@@ -67,22 +73,38 @@ button {
   <meta name="keywords" content="music videos,youtube music, music tube, music video downloads,youtube free music videos,free youtube music videos,free music videos on youtube,free music videos at youtube,children s music videos youtube,utube music videos">
 
 
-<script>
+  <script>
   $(function() {
     $( "#dialog" ).dialog({
       width: 700
-      });
+    });
+  });
+  $(function() {
+    $( "#accordion" ).accordion({
+      collapsible: true, 
+      active:false,
+      heightStyle: "content"
+    });
+  });
+  $(function() {
+    $( "#accordion-resizer" ).resizable({
+      minHeight: 90,
+      minWidth: 200,
+      resize: function() {
+        $( "#accordion" ).accordion( "refresh" );
+      }
+    });
   });
   </script>
 </head>
 
 
 <body>
-   
+
   {%if artists is not none%}
   <div id="dialog" title="Disambiguation">
     {%for artist in artists%}
-       <a href="/xhrArtist?mbid={{artist.mbid}}">{{artist.name}}</a> <font style="padding-left:5em"> Pais: {{artist.country}} </font></p>
+    <a href="/xhrArtist?mbid={{artist.mbid}}">{{artist.name}}</a> <font style="padding-left:5em"> Pais: {{artist.country}} </font></p>
     {%endfor%}
   </div>
   {%endif%}
@@ -98,26 +120,44 @@ button {
 
     <div id="contents">
 
+    <!--
+     <div id="topArtists">
 
-   <div id="topArtists">
-    <table>
-      <tr id="logos">
-      </tr>
+      <table>
+        <tr id="logos">
+        </tr>
+      </table>
+    </div>
+    <script type="text/javascript">getTopArtists();</script>
+    -->
+
+    <div id="ytImages">
+    </div>
+
+    <div id="player"></div>
+    <script type="text/javascript">loadVideos();</script>
+    <script>createIframe()</script>
+
+    <div id="accordion-resizer" class="ui-widget-content">
+      <div id="accordion">
+        <h3>Datos del Artista</h3>
+        <div>
+          <p id="artistInfo">
+          </p>
+        </div>
+        <h3>Playlists por Tags</h3>
+        <div id="artistTags">
+          <p>
+          </p>
+        </div>
+      </div>
+    </div>
+   <!-- <table id="songs">
     </table>
+    -->
   </div>
-  <script type="text/javascript">getTopArtists();</script>
 
-     <div id="player"></div>
-     <script type="text/javascript">loadVideos();</script>
-     <script>createIframe()</script>
-
-
-     <table id="songs">
-     </table>
-
-   </div>
-
-   <div id="rightPane">
+  <div id="rightPane">
     <img id="topLogo">
     <table id="similarLogos">
     </table>

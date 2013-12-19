@@ -295,3 +295,41 @@ def crawl_artist(artist_name):
             
                 
             taskqueue.add(url='/worker',params={'f': '[track.get_tracks(w.album_mbid) for w in  artist.get_artist_albums("%s")[1]]'%m.artist_mbid})
+
+
+
+from HTMLParser import HTMLParser
+
+class MLStripper(HTMLParser):
+    def __init__(self):
+        self.reset()
+        self.fed = []
+    def handle_data(self, d):
+        self.fed.append(d)
+    def get_data(self):
+        return ''.join(self.fed)
+
+def strip_tags(html):
+    s = MLStripper()
+    s.feed(html)
+    return s.get_data()
+
+def getArtistInfo(mbid):
+    logging.error("getArtistInfo")
+    url=tools.get_url("lastfm","artistInfo",mbid)
+    logging.error(url)
+    j=tools.get_json(url)
+    data=j["artist"]["bio"]["content"]
+    return strip_tags(data)
+
+def getArtistTags(mbid):
+    logging.error("getArtistTags")
+    url=tools.get_url("lastfm","artistTags",mbid)
+    logging.error(url)
+    j=tools.get_json(url)
+    data=[]
+    for tag in j["toptags"]["tag"]:
+        if int(tag["count"])>=30:
+            data.append(tag["name"])
+    return data
+    

@@ -30,9 +30,9 @@ def get_url(server,service,param):
         elif service=='genres':
             SERVICE='/?method=track.gettoptags&'
             params="mbid="+mbid+"&api_key="+API_KEY
-        elif service=='info':
+        elif service=='artistInfo':
             SERVICE='/?method=artist.getinfo&'
-            params="mbid="+mbid+"&api_key="+API_KEY
+            params="mbid="+mbid+"&api_key="+API_KEY+"&format=json"
         elif service=='album':
             SERVICE='/?method=album.getinfo&'
             params="mbid="+mbid+"&api_key="+API_KEY+"&format=json"
@@ -54,6 +54,9 @@ def get_url(server,service,param):
             params=params.replace(" ","+")
         elif service=="artisttoptags":
             SERVICE='/?method=artist.gettoptracks&'
+            params='mbid='+param+'&api_key='+API_KEY+'&format=json'
+        elif service=="artistTags":
+            SERVICE='/?method=artist.gettoptags&'
             params='mbid='+param+'&api_key='+API_KEY+'&format=json'
             
 
