@@ -44,13 +44,13 @@ def get_url(server,service,param):
             params="api_key="+API_KEY+"&format=json&limit=50"
         elif service=='toptracks':
             SERVICE='?method=chart.gettoptracks&'
-            params="api_key="+API_KEY+"&format=json&limit=5"
+            params="api_key="+API_KEY+"&format=json&limit=20"
         elif service=='toptags':
             SERVICE='?method=chart.gettoptags&'
             params="api_key="+API_KEY+"&format=json&limit=50"
         elif service=='toptagtracks':
             SERVICE='?method=tag.gettoptracks&'
-            params="tag="+param+"&api_key="+API_KEY+"&format=json&limit=50"
+            params="tag="+param+"&api_key="+API_KEY+"&format=json&limit=20"
             params=params.replace(" ","+")
         elif service=="artisttoptags":
             SERVICE='/?method=artist.gettoptracks&'

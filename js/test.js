@@ -223,63 +223,7 @@ function getTopLogo(artist){
 };
 
 
-function getTopVideo(track){
-     var xhr = new XMLHttpRequest();
-        xhr.open('post', '/xhrGetVideo', true);
-        xhr.onload = function () {
-            // do something to response
-            console.log(this.responseText);
-            var j=JSON.parse(this.responseText);
-            video={}
-            video["ytid"]=j["video"]
-            video["mbid"]=j["artist"]["mbid"]
-            
-            ytplist.push(video);
-            /*
-            var table=document.getElementById("songs");
-                var tr=document.createElement("tr");
-                        tr.setAttribute("class","trsong")
-                    var td = document.createElement("td");
-                        tr.setAttribute("class","tdsong")
-                        var button=document.createElement("button");
-                            button.setAttribute("onclick", "parseVideo('"+video["ytid"]+"','"+video["mbid"]+"')")
-                            if(track["number"]){
-                                var txt=document.createTextNode(track["number"]+" - "+track["name"]+" - "+ track["artist"]["name"])
-                            }
-                            else{
-                                var txt=document.createTextNode(track["name"]+" - "+ track["artist"]["name"])
-                            }
-                        button.appendChild(txt);
-                    td.appendChild(button);
-                tr.appendChild(td);
-            table.appendChild(tr);
-            */
 
-            
-        };
-        xhr.send(JSON.stringify(track));
-
-};
-
-
-
-
-function loadVideos(){
-    var xhr = new XMLHttpRequest();
-        xhr.open('GET', '/xhrFrontVideos', true);
-        xhr.onload = function () {
-            // do something to response
-            console.log(this.responseText);
-            var tracks=JSON.parse(this.responseText);
-            for (var i = 0; i <  tracks.length ; i++) {
-                track=tracks[i];
-
-                getTopVideo(track)
-
-            };
-        };
-        xhr.send();
-};
 
 function getAlbumTracks(album){
     var xhr = new XMLHttpRequest();
@@ -374,6 +318,68 @@ function getTrackVideo(track){
 };
 
 
+function getTopVideo(track){
+     var xhr = new XMLHttpRequest();
+        xhr.open('post', '/xhrGetVideo', true);
+        xhr.onload = function () {
+            // do something to response
+            console.log(this.responseText);
+            var j=JSON.parse(this.responseText);
+            video={}
+            video["ytid"]=j["video"]
+            video["mbid"]=j["artist"]["mbid"]
+            
+            ytplist.push(video);
+            if(ytplist.length==1){
+                 addVideoById(video)
+            }
+            /*
+            var table=document.getElementById("songs");
+                var tr=document.createElement("tr");
+                        tr.setAttribute("class","trsong")
+                    var td = document.createElement("td");
+                        tr.setAttribute("class","tdsong")
+                        var button=document.createElement("button");
+                            button.setAttribute("onclick", "parseVideo('"+video["ytid"]+"','"+video["mbid"]+"')")
+                            if(track["number"]){
+                                var txt=document.createTextNode(track["number"]+" - "+track["name"]+" - "+ track["artist"]["name"])
+                            }
+                            else{
+                                var txt=document.createTextNode(track["name"]+" - "+ track["artist"]["name"])
+                            }
+                        button.appendChild(txt);
+                    td.appendChild(button);
+                tr.appendChild(td);
+            table.appendChild(tr);
+            */
+
+            
+        };
+        xhr.send(JSON.stringify(track));
+
+};
+
+
+
+
+function loadVideos(){
+    var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/xhrFrontVideos', true);
+        xhr.onload = function () {
+            // do something to response
+            console.log(this.responseText);
+            var tracks=JSON.parse(this.responseText);
+            for (var i = 0; i <  tracks.length ; i++) {
+                track=tracks[i];
+
+                getTopVideo(track)
+
+            };
+        };
+        xhr.send();
+};
+
+
 function changeArtist(mbid){
     var xhr = new XMLHttpRequest();
         xhr.open('POST', '/xhrLogo', true);
@@ -409,8 +415,14 @@ function getytTopImages(ytlist){
     for (var i =div.childNodes.length - 1; i >= 0; i--) {
        div.removeChild(div.childNodes[i])
     };
+    var timeout = setInterval(function() { 
+                            if(checkHas5()){ 
+                                clearInterval(timeout); 
+                                isFinished = true; 
+                            } 
+                        }, 100);
 
-    for (var i = 0; i < ytlist.length; i++) {
+    for (var i = 0; i < ytlist.length && i<5 ; i++) {
         var img=document.createElement("img")
             img.src="http://img.youtube.com/vi/"+ytlist[i]["ytid"]+"/0.jpg"
             img.style.width="85px"
@@ -433,8 +445,8 @@ function getArtistTags(mbid){
             for (var i=tl.length - 1; i >= 0; i--) {
             console.log(tl[i])
                 var a=document.createElement("a")
-                    a.href=tl[i]
                     a.appendChild(document.createTextNode(tl[i]))
+                    a.setAttribute("onclick","setPlayList('"+tl[i]+"')")
                 p.appendChild(a)
                 p.appendChild(document.createTextNode("    "))
             };
@@ -443,6 +455,35 @@ function getArtistTags(mbid){
         };
         var query={"artist":mbid};
         console.log("artistInfo")
+        xhr.send(JSON.stringify(query));
+    
+    };
+
+function setPlayList(tag){
+    //limpiamos la playlist para generar una nueva
+    ytplist=[]
+
+    var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/xhrTagPlayList', false);
+        xhr.onload = function () {
+            // do something to response
+
+
+            console.log(this.responseText);
+            var tracks=JSON.parse(this.responseText);
+            for (var i = 0; i <  tracks.length ; i++) {
+                track=tracks[i];
+
+                getTopVideo(track)
+
+            };
+            
+
+           getytTopImages(ytplist)
+
+        };
+        var query={"tag":tag};
+        console.log(query)
         xhr.send(JSON.stringify(query));
     
     };
@@ -550,13 +591,19 @@ function onYouTubeIframeAPIReady() {
  
 }
 
+
+
+
+function checkHas5(){
+    if (ytplist.length==5){
+        return true;
+    }
+    return false
+}
+
 function addVideo(){
 
-    if(ytplist.length<=0){
-        
-        window.setTimeout(addVideo(),1000)
-        return;
-    }
+    
     var video=ytplist.shift()
     console.log(video);
     addVideoById(video)
@@ -594,4 +641,11 @@ function createIframe(){
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
 }
+
+function sleep(ms)
+    {
+        var dt = new Date();
+        dt.setTime(dt.getTime() + ms);
+        while (new Date().getTime() < dt.getTime());
+    }
 

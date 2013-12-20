@@ -583,6 +583,35 @@ class xhrGetArtistTags(Handler):
         logging.error(tags)
         self.response.out.write(json.dumps(tags))
 
+class xhrTagPlayList(Handler):
+    def post(self):
+        j=self.request.body
+        data=json.loads(j)
+        genre=data["tag"]
+        
+        data=playlists.getTagTracks(genre)
+
+        tracks=[]
+        i=1
+
+        
+        for d in data["toptracks"]["track"]:
+            logging.error(d)
+    
+            track={}
+            track["artist"]={}
+            track["artist"]["name"]=d["artist"]["name"]
+            track["artist"]["mbid"]=d["artist"]["mbid"]
+            track["name"]=d["name"]
+            track["number"]=i
+            if tracks not in tracks:
+                tracks.append(track)
+                i+=1
+        
+        self.response.out.write(json.dumps(tracks))
+
+
+
 class xhrPlaylist(Handler):
     def get(self):
         mbid=self.request.get("mbid")
@@ -617,5 +646,6 @@ app = webapp2.WSGIApplication([('/', xhrFront),('/echonest',EchonestPage),('/las
                                ('/track', TrackPage),('/album',AlbumPage),('/artist', BandPage), 
                                ('/xhrArtist', xhrArtist),('/xhrFront', xhrFront),('/xhrAlbum',xhrAlbum),('/xhrPlaylist',xhrPlaylist),
                                ('/xhrLogo',xhrLogo),('/xhrAlbums', xhrAlbums),('/xhrAlbumImage', xhrAlbumImage),('/xhrSimilar', xhrSimilar),('/xhrTopArtists', xhrTopArtists),('/xhrFrontVideos', xhrFrontVideos),('/xhrGetVideo',xhrGetVideo),
-                               ('/xhrGetAlbumTracks',xhrGetAlbumTracks),('/xhrGetTrackVideo',xhrGetTrackVideo),('/xhrArtistImage',xhrArtistImage),('/xhrArtistInfo',xhrGetArtistInfo),('/xhrArtistTags',xhrGetArtistTags)
+                               ('/xhrGetAlbumTracks',xhrGetAlbumTracks),('/xhrGetTrackVideo',xhrGetTrackVideo),('/xhrArtistImage',xhrArtistImage),('/xhrArtistInfo',xhrGetArtistInfo),('/xhrArtistTags',xhrGetArtistTags),
+                               ('/xhrTagPlayList',xhrTagPlayList)
                                ], debug=True)

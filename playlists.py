@@ -210,6 +210,13 @@ def getTopTracks():
 
 	return toptracks
 
+def getTagTracks(genre):
+	url=tools.get_url("lastfm","toptagtracks",genre)
+	logging.error(url)
+	tracks=tools.get_json(url)
+
+	return tracks
+
 def get_playlist_from_url(playlist_name):
 
 	playlist={"data":[]}
