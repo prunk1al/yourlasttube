@@ -52,9 +52,9 @@ def get_url(server,service,param):
             SERVICE='?method=tag.gettoptracks&'
             params="tag="+param+"&api_key="+API_KEY+"&format=json&limit=20"
             params=params.replace(" ","+")
-        elif service=="artisttoptags":
+        elif service=="artisttoptracks":
             SERVICE='/?method=artist.gettoptracks&'
-            params='mbid='+param+'&api_key='+API_KEY+'&format=json'
+            params='mbid='+param+'&api_key='+API_KEY+'&format=json&limit=20"'
         elif service=="artistTags":
             SERVICE='/?method=artist.gettoptags&'
             params='mbid='+param+'&api_key='+API_KEY+'&format=json'
@@ -65,7 +65,7 @@ def get_url(server,service,param):
         API_KEY=YOUTUBE_API
         SERVER='gdata.youtube.com'
         SERVICE='/feeds/api/videos?q='
-        params=artist+"+"+song+"+official+video&max-results=1&v=2&format=5&alt=json&key="+API_KEY
+        params='"'+song+'+'+artist+'"&max-results=1&v=2&format=5&alt=json&orderby=viewCount&key='+API_KEY
         params=params.replace(" ","+")
 
 

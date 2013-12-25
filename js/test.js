@@ -325,34 +325,18 @@ function getTopVideo(track){
             // do something to response
             console.log(this.responseText);
             var j=JSON.parse(this.responseText);
-            video={}
-            video["ytid"]=j["video"]
+            var video={}
+            video["ytid"]=j["ytid"]
             video["mbid"]=j["artist"]["mbid"]
             
             ytplist.push(video);
             if(ytplist.length==1){
                  addVideoById(video)
             }
-            /*
-            var table=document.getElementById("songs");
-                var tr=document.createElement("tr");
-                        tr.setAttribute("class","trsong")
-                    var td = document.createElement("td");
-                        tr.setAttribute("class","tdsong")
-                        var button=document.createElement("button");
-                            button.setAttribute("onclick", "parseVideo('"+video["ytid"]+"','"+video["mbid"]+"')")
-                            if(track["number"]){
-                                var txt=document.createTextNode(track["number"]+" - "+track["name"]+" - "+ track["artist"]["name"])
-                            }
-                            else{
-                                var txt=document.createTextNode(track["name"]+" - "+ track["artist"]["name"])
-                            }
-                        button.appendChild(txt);
-                    td.appendChild(button);
-                tr.appendChild(td);
-            table.appendChild(tr);
-            */
-
+           
+            if(ytplist.length==5){
+                getytTopImages(ytplist)
+            }
             
         };
         xhr.send(JSON.stringify(track));
@@ -390,14 +374,24 @@ function changeArtist(mbid){
             
 
             if (image=="None"){
-                image="http://chart.apis.google.com/chart?chst=d_text_outline&chld=000000|38|h|FFFFFF|_|"+name;
+                image="http://chart.apis.google.com/chart?chst=d_text_outline&chld=000000|38|h|FFFFFF|_|Opps!!!";
             }
             
-          
-            var img=document.getElementById("topLogo");
+            var div=document.getElementById("topLogo")
+                if(div.hasChildNodes()){
+                    for (var i =div.childNodes.length - 1; i >= 0; i--) {
+                      div.removeChild(div.childNodes[i])
+                    };
+                }
+            var a = document.createElement("a")
+                a.href="/artist/"+mbid
+            var img=document.createElement("img");
                     img.src=image
+                   // img.setAttribute("onclick","setPlayList('artist','"+mbid+"')")
                     img.style.width="250px";
             
+            a.appendChild(img)
+            div.appendChild(a)
             
         };
         var query='{"artist":'+mbid+'}';
@@ -410,17 +404,16 @@ function changeArtist(mbid){
     getytTopImages(ytplist)
 };
 
+
+
+
+
 function getytTopImages(ytlist){
     var div=document.getElementById("ytImages")
     for (var i =div.childNodes.length - 1; i >= 0; i--) {
        div.removeChild(div.childNodes[i])
     };
-    var timeout = setInterval(function() { 
-                            if(checkHas5()){ 
-                                clearInterval(timeout); 
-                                isFinished = true; 
-                            } 
-                        }, 100);
+   
 
     for (var i = 0; i < ytlist.length && i<5 ; i++) {
         var img=document.createElement("img")
@@ -442,11 +435,15 @@ function getArtistTags(mbid){
             var tags=JSON.parse(this.responseText)
             var tl=tags["tags"]
             var p=document.getElementById("artistTags");
+
+            for (var i =p.childNodes.length - 1; i >= 0; i--) {
+               p.removeChild(p.childNodes[i])
+            };
             for (var i=tl.length - 1; i >= 0; i--) {
             console.log(tl[i])
                 var a=document.createElement("a")
                     a.appendChild(document.createTextNode(tl[i]))
-                    a.setAttribute("onclick","setPlayList('"+tl[i]+"')")
+                    a.href="/tag/"+tl[i]
                 p.appendChild(a)
                 p.appendChild(document.createTextNode("    "))
             };
@@ -459,18 +456,36 @@ function getArtistTags(mbid){
     
     };
 
-function setPlayList(tag){
+function setPlayList(tipo,data){
     //limpiamos la playlist para generar una nueva
     ytplist=[]
 
+    if (tipo=="tag"){
+        url='/xhrTagPlayList'
+    }
+    else if (tipo=="artist"){
+        url='/xhrArtistPlayList'
+    }
+    else if(tipo=="predefined"){
+        loadVideos()
+        return
+    }
     var xhr = new XMLHttpRequest();
-        xhr.open('POST', '/xhrTagPlayList', false);
+        xhr.open('POST', url, false);
         xhr.onload = function () {
             // do something to response
 
 
+
+
             console.log(this.responseText);
             var tracks=JSON.parse(this.responseText);
+
+            if(tipo=="artist"){
+                meta=document.getElementById("desc")
+                    meta.content=tracks[0]["artist"]["name"]+" Playlist"
+            }
+
             for (var i = 0; i <  tracks.length ; i++) {
                 track=tracks[i];
 
@@ -479,10 +494,10 @@ function setPlayList(tag){
             };
             
 
-           getytTopImages(ytplist)
+           //getytTopImages(ytplist)
 
         };
-        var query={"tag":tag};
+        var query={"data":data};
         console.log(query)
         xhr.send(JSON.stringify(query));
     
@@ -559,14 +574,15 @@ function getSimilarLogo(artist, name){
             }
             var table=document.getElementById("similarLogos")
             var tr=document.createElement("tr")
-            var a=document.createElement("a");
-                a.href="xhrArtist?mbid="+artist
+            var a=document.createElement("a")
+                a.href="/artist/"+artist
             var img=document.createElement("img");
                 img.src=image;
                 img.id=artist
                 img.alt=name
-                img.style.width="200px"
-            a.appendChild(img)
+                img.style.width="150px"
+                //img.setAttribute("onclick", "setPlayList('artist','"+artist+"')")
+                a.appendChild(img)
             tr.appendChild(a);
             table.appendChild(tr)
             
@@ -594,12 +610,7 @@ function onYouTubeIframeAPIReady() {
 
 
 
-function checkHas5(){
-    if (ytplist.length==5){
-        return true;
-    }
-    return false
-}
+
 
 function addVideo(){
 
@@ -642,10 +653,4 @@ function createIframe(){
 
 }
 
-function sleep(ms)
-    {
-        var dt = new Date();
-        dt.setTime(dt.getTime() + ms);
-        while (new Date().getTime() < dt.getTime());
-    }
 
