@@ -15,11 +15,7 @@ import time
 
 def get_url(server,service,param):
 
-    LASTFM_API= '51293239750eea5095511e23b3107e31'
-    YOUTUBE_API='AI39si42ldETBAU7tY22n0DCKTn1jBDj3Hx4_RwMjQvzW27yyQ_q4QjekBC7rfEd80rMArD6wZxmngyEK0IDb9rUrN28uW6Ybw'
-    FARNART_API='32a11570b86e33ddd12310fb76d194ee'
-    ECHONEST_API='EPOY20CBSSGYKV88Y'
-    DIGITAL_API='7d76j73xawxh'
+   
     
     if server=='lastfm':
         API_KEY=LASTFM_API
