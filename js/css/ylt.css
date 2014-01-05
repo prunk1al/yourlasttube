@@ -1,0 +1,119 @@
+body {
+    background-color: #FFFFFF
+}
+#wrap {
+    width: 1024px;
+    height: 100%;
+    margin: 0 auto;
+}
+#top {
+    position:relative;
+    width: 750;
+    margin: 2px;
+}
+#search {
+    position: absolute;
+    right: 0%;
+    top:100px;
+}
+#bottom {
+    position: fixed;
+    bottom:0px;
+    width: 1024px;
+}
+#contents {
+    position: relative;
+    width: 1024px;
+    margin: 0 auto;
+}
+#left {
+    position: absolute;
+    margin-top:20px;
+    margin-left: 2px;
+    width:152px;
+    height: 550px;
+}
+#player {
+    position:absolute;
+    left: 157px;
+    top:40px;
+}
+#ytImages {
+    position: absolute;
+    left: 250px;
+    top:400px;
+}
+#buyButtons {
+    position: absolute;
+    left:155px;
+    top: 2px;
+}
+#songs {
+    border-collapse: collapse;
+    background-color: black;
+    width: 425px;
+    border: 1px solid white;
+}
+.tdsong {
+    border: 1px solid white;
+}
+#rightPane {
+    position: absolute;
+    top: -40px;
+    right: 2px;
+    width: 258px;
+    height: 725px;
+}
+#ytImages {
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+button {
+    background:none!important;
+    border:none;
+    padding:0!important;
+    color:#FFFFFF;
+}
+h3 {
+    border:1px solid black;
+    font-family:'Lucida Sans Unicode', 'Lucida Sans', 'Lucida Grande', Arial, sans-serif;
+}
+p {
+    font-family:'Lucida Sans Unicode', 'Lucida Sans', 'Lucida Grande', Arial, sans-serif;
+}
+#accordion-resizer {
+    position: absolute;
+    left: 0px;
+    top: 40px;
+    width: 153px;
+    height: 90px;
+}
+#searchInput {
+    border: 0px;
+}
+#example2 {
+    position: absolute;
+    top:528px;
+    left: -120px
+}
+.image {
+    position: relative
+}
+.text {
+    position: absolute;
+    bottom: 10px;
+    left: 2px;
+    color:white;
+    background-color: rgba(0, 0, 0, 0.7);
+    height: 40px;
+    width: 235px;
+}
+.white-popup {
+    position: relative;
+    background: #FFF;
+    padding: 20px;
+    width:auto;
+    max-width: 500px;
+    margin: 20px auto;
+}
+

@@ -1,0 +1,86 @@
+a.cute-balloon
+{
+}
+
+table.cute-balloon 
+{
+    position:absolute;
+	display:none;
+    z-index:90;
+    border:1px solid;
+    background:#ccc;
+}
+
+table.cute-balloon  td
+{
+}
+
+table.cute-balloon  span
+{
+    display:block;
+}
+
+table.cute-balloon  td img
+{
+    margin:0;
+    padding:0;
+}
+
+table.cute-balloon  span.noroeste
+{
+    width:28px;
+    height:35px;
+}
+
+table.cute-balloon  span.noreste
+{
+    width:28px;
+    height:35px;
+}
+
+table.cute-balloon  span.sureste
+{
+    width:28px;
+    height:54px;
+}
+
+table.cute-balloon  span.suroeste
+{
+    width:28px;
+    height:54px;
+}
+
+table.cute-balloon  td.norte
+{
+    height:35px;
+}
+
+table.cute-balloon  td.este
+{
+}
+
+table.cute-balloon  td.oeste
+{
+}
+
+table.cute-balloon  td.sur
+{
+    height:54px;
+}
+
+table.cute-balloon  span.pso
+{
+    height:54px;
+    width:100px;
+}
+
+table.cute-balloon  td.pse
+{
+}
+
+table.cute-balloon  td.content
+{
+    padding:0px;
+    width:300px;
+    color:#fff;
+}

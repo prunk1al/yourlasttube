@@ -126,8 +126,9 @@ def get_video_db(artist_name,song):
     return None
 
 def get_video(artist_name,song):
-    song=song.replace(" ","+").replace("-","+").replace("'","")
+    song=song.replace(" ","%20").replace("-","+").replace("'","")
     
+    data= None
     data=memcache.get("%s,%s"%(artist_name,song))
     
     if data is None:
@@ -137,11 +138,11 @@ def get_video(artist_name,song):
         else:
             
             url=tools.get_url('youtube','video',[artist_name,song])
+            logging.error(url)
             j=tools.get_json(url)
-            try:
-                data=j["feed"]["entry"][0]['media$group']['yt$videoid']['$t'] 
-            except:
-                data=" "
+            
+            data=j["feed"]["entry"][0]['media$group']['yt$videoid']['$t']
+            
         memcache.set("%s,%s"%(artist_name,song),data)
  
     return data
@@ -241,3 +242,6 @@ def getTrackVideo(mbid):
     artist_name=j['artist-credit'][0]["artist"]["name"]
     song=j["title"]
     return get_video(artist_name,song)
+
+def checkImage(data):
+    return True

@@ -195,6 +195,8 @@ def get_echonest_radio(tipo, mbid):
 	memcache.set(playlist_name,playlist)
 	return playlist
 
+
+
 def get_echonest_tag_radio(genre):
 	song=[]
 	playlist_name="%s radio playlist"%genre
@@ -216,6 +218,22 @@ def getTagTracks(genre):
 	tracks=tools.get_json(url)
 
 	return tracks
+
+def getArtistTracks(genre):
+	url=tools.get_url("lastfm","artisttoptracks",genre)
+	logging.error(url)
+	tracks=tools.get_json(url)
+
+	return tracks
+
+def getEchoTagTracks(genre):
+	playlist={"data":[]}
+	url=tools.get_url("echonest","genre",genre).replace(" ","%20")
+	logging.error(url)
+	j=tools.get_json(url)
+	return j['response']['songs']
+		
+
 
 def get_playlist_from_url(playlist_name):
 

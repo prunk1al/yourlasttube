@@ -7,6 +7,7 @@ import Class
 from google.appengine.api.labs import taskqueue
 import track
 import time
+from CorrectArtist import CorrectArtist
 
 def get_artist_albums(artist_mbid):
     
@@ -135,6 +136,12 @@ def getXhrAlbums(mbid=""):
 
 
 def get_xhrsimilar(mbid=""):
+    
+
+    """similars=memcache.get("similars %s"%mbid) 
+    if similars is not None:
+        return similars"""
+        
     similars=[]
     logging.error("GETTING SIMILAR FROM ECHONEST")
     url=tools.get_url('lastfm','similar',mbid)
@@ -148,13 +155,24 @@ def get_xhrsimilar(mbid=""):
     except:
         return []
     for i in a:
-        name=i['name']
-        similar={}
-        similar["name"]=name
-        similar["mbid"]=i['mbid']
-        logging.error(similar)
-        similars.append(similar)
+        try:
+            name=i['name']
+            similar={}
+            similar["name"]=name
+            cmbid=CorrectArtist.by_id(i["mbid"])
+            if cmbid is not None:
+                similar["mbid"]=cmbid.mbid
+            else:
+                similar["mbid"]=i['mbid']
 
+            similar["logo"]=i["image"][4]["#text"]
+            
+            logging.error(similar)
+            similars.append(similar)
+        except:
+            pass
+
+    memcache.set("similars %s"%mbid, similars)
     return similars
 
 def  get_similar(mbid=""):
@@ -204,6 +222,15 @@ def get_artist_logo(mbid):
             return None
     return logo
 
+def getName(mbid):
+    name=""
+    url="http://www.musicbrainz.org/ws/2/artist/?query=arid:"+mbid
+    xml=tools.get_xml(url)
+
+    if xml.getElementsByTagName("artist-list")[0].attributes.get("count").value == '1':
+        name= xml.getElementsByTagName("name")[0].childNodes[0].nodeValue
+    return name
+
 
 def get_artist_mb(mbid):
     data=memcache.get("%s artist="%mbid)
@@ -239,6 +266,57 @@ def get_artist_mb(mbid):
             
         return artist
 
+
+def search_artist(artist_name):
+
+    
+    logging.error("getting data of %s"%artist_name)
+    data = None
+    #data=memcache.get("search %s"%artist_name)
+    if data is not None:
+        logging.error("mbid from ndb or memcache get_data")
+        return data
+    
+    url=tools.get_url('musicbrainz','artist',artist_name)
+    logging.error(url)
+    xml=tools.get_xml(url)
+    parsed=xml.getElementsByTagName("artist")
+    
+    disambiguation=" "
+    artists=[]
+
+    if xml.getElementsByTagName("artist-list")[0].attributes.get("count").value == '1' :
+        artist={}
+        artist["mbid"]=parsed[0].attributes.get("id").value
+        artist["name"]=parsed[0].getElementsByTagName("name")[0].childNodes[0].nodeValue
+        artists.append(artist)
+    else:
+        
+        for a in parsed:
+            artist={}
+
+            artist["mbid"]=a.attributes.get("id").value
+            artist["name"]=a.getElementsByTagName("name")[0].childNodes[0].nodeValue
+            
+            try:
+                artist["country"]=a.getElementsByTagName("area")[0].getElementsByTagName("name")[0].childNodes[0].nodeValue
+            except:
+                artist["country"]=""
+
+            try:
+                disambiguation=a.getElementsByTagName("disambiguation")[0].childNodes[0].nodeValue
+            except:
+                disambiguation=" "
+            
+            
+
+            artists.append(artist)
+            
+    memcache.set("search %s"%artist_name, artists)
+
+    return artists
+
+"""
 def search_artist(artist_name):
 
     
@@ -286,6 +364,7 @@ def search_artist(artist_name):
     
 
     return artists
+"""
 def crawl_artist(artist_name):
     t=search_artist(artist_name)
                         

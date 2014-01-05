@@ -6,11 +6,4 @@ Disallow: /track
 Disallow: /echonest
 Disallow: /playlist
 
-User-agent: *
 
-Disallow: /artists
-Disallow: /artist
-Disallow: /album
-Disallow: /track
-Disallow: /echonest
-Disallow: /playlist

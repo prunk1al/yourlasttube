@@ -19,6 +19,7 @@ def get_url(server,service,param):
     YOUTUBE_API='AI39si42ldETBAU7tY22n0DCKTn1jBDj3Hx4_RwMjQvzW27yyQ_q4QjekBC7rfEd80rMArD6wZxmngyEK0IDb9rUrN28uW6Ybw'
     FARNART_API='32a11570b86e33ddd12310fb76d194ee'
     ECHONEST_API='EPOY20CBSSGYKV88Y'
+    DIGITAL_API='7d76j73xawxh'
     
     if server=='lastfm':
         API_KEY=LASTFM_API
@@ -26,7 +27,7 @@ def get_url(server,service,param):
         mbid=param
         if service=='similar':
             SERVICE = '/?method=artist.getsimilar&'
-            params = "mbid="+mbid+"&api_key="+API_KEY+"&limit=5&format=json"
+            params = "mbid="+mbid+"&api_key="+API_KEY+"&limit=4&format=json"
         elif service=='genres':
             SERVICE='/?method=track.gettoptags&'
             params="mbid="+mbid+"&api_key="+API_KEY
@@ -52,20 +53,41 @@ def get_url(server,service,param):
             SERVICE='?method=tag.gettoptracks&'
             params="tag="+param+"&api_key="+API_KEY+"&format=json&limit=20"
             params=params.replace(" ","+")
-        elif service=="artisttoptags":
+        elif service=="artisttoptracks":
             SERVICE='/?method=artist.gettoptracks&'
-            params='mbid='+param+'&api_key='+API_KEY+'&format=json'
+            params='mbid='+param+'&api_key='+API_KEY+'&format=json&limit=20"'
         elif service=="artistTags":
             SERVICE='/?method=artist.gettoptags&'
             params='mbid='+param+'&api_key='+API_KEY+'&format=json'
-            
+        elif service=="topArtists":
+            SERVICE='/?method=chart.gettopartists&'
+            params='api_key='+API_KEY+'&format=json&limit=5'
+        elif service=="topTags":
+            SERVICE='/?method=chart.gettoptags&'
+            params='api_key='+API_KEY+'&format=json&limit=5'
+        elif service=='genreCreate':
+            SERVICE='?method=tag.gettoptracks&'
+            params="tag="+param+"&api_key="+API_KEY+"&format=json&limit=6"
+            params=params.replace(" ","+")
+        elif service=='genreNext':
+            SERVICE='?method=tag.gettoptracks&'
+            params="tag="+param["tag"]+"&api_key="+API_KEY+"&format=json&limit=1&page="+str(param["page"])
+            params=params.replace(" ","+")
+        elif service=='artistCreate':
+            SERVICE='?method=artist.gettoptracks&'
+            params="mbid="+param+"&api_key="+API_KEY+"&format=json&limit=6"
+            params=params.replace(" ","+")
+        elif service=='artistNext':
+            SERVICE='?method=artist.gettoptracks&'
+            params="mbid="+param["artist"]+"&api_key="+API_KEY+"&format=json&limit=1&page="+str(param["page"])
+            params=params.replace(" ","+")   
 
     elif server=='youtube':
         artist,song=param[0],param[1]
         API_KEY=YOUTUBE_API
         SERVER='gdata.youtube.com'
         SERVICE='/feeds/api/videos?q='
-        params=artist+"+"+song+"+official+video&max-results=1&v=2&format=5&alt=json&key="+API_KEY
+        params=artist+'+'+song+'&max-results=1&v=2&format=5&alt=json&hd=true&key='+API_KEY
         params=params.replace(" ","+")
 
 
@@ -126,12 +148,34 @@ def get_url(server,service,param):
             params='api_key='+API_KEY+'&format=json&type=style'
         if service=="genre":
             SERVICE='/api/v4/playlist/static?'
-            params='api_key='+API_KEY+'&format=json&results=50&description='+mbid+'&type=artist-description&artist_min_familiarity=0.7&dmca=true'
+            params='api_key='+API_KEY+'&format=json&results=50&genre='+mbid.lower()+'&distribution=focused&target_artist_hotttnesss=0.8&target_song_hotttnesss=0.8&type=genre-radio&bucket=id:musicbrainz&limited_interactivity=true&artist_pick=artist_hotttnesss-desc'
         if service=="artist":
             SERVICE='/api/v4/playlist/static?'
             params='api_key='+API_KEY+'&format=json&results=50&artist_id=musicbrainz:artist:'+mbid+'&type=artist&bucket=id:musicbrainz'
+        if service=="genreCreate":
+            SERVICE='/api/v4/playlist/dynamic/create?'
+            params='api_key='+API_KEY+'&format=json&genre='+mbid.lower()+'&distribution=focused&target_artist_hotttnesss=0.8&target_song_hotttnesss=0.8&type=genre-radio&bucket=id:musicbrainz&limited_interactivity=true&artist_pick=artist_hotttnesss-desc'
+        if service=="genreNext5":
+            SERVICE='/api/v4/playlist/dynamic/next?'
+            params='api_key='+API_KEY+'&format=json&session_id='+mbid+'&results=5'
+        if service=="genreNext":
+            SERVICE='/api/v4/playlist/dynamic/next?'
+            params='api_key='+API_KEY+'&format=json&session_id='+mbid+'&results=1'
+        if service=="get7digital":
+            SERVICE='/api/v4/song/search'
+            params='api_key='+API_KEY+'&format=json&results=1&artist='+mbid["artist"]["name"]+'&title='+mbid["name"]+'&bucket=id:7digital-US&bucket=tracks'
 
-  
+    elif server=="7digital":
+        SERVER='api.7digital.com'
+        API_KEY=DIGITAL_API
+
+        if service=="buytrack":
+            SERVICE='/1.2/track/search?'
+            params='q=%s %s&oauth_consumer_key=%s&pagesize=1'%(param["name"],param["artist"]["name"],API_KEY)
+            params=params.replace(" ","%20")
+
+
+
     url ='http://%s%s%s' % (SERVER,SERVICE,params) 
     
 
@@ -161,14 +205,13 @@ def get_xml(url):
     return xml
 
 def get_json(url):
-
     p=memcache.get(url)
     if p is  None:
         #time.sleep(1)
         logging.error(url)
         try:
             result = urlfetch.fetch(url)
-        
+            
             page=urllib2.urlopen(url)
             p=page.read()
             memcache.set(url,p)
