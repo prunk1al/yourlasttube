@@ -226,7 +226,6 @@ def getArtistTracks(genre):
 
 	return tracks
 
-<<<<<<< HEAD
 def getEchoTagTracks(genre):
 	playlist={"data":[]}
 	url=tools.get_url("echonest","genre",genre).replace(" ","%20")
@@ -236,8 +235,6 @@ def getEchoTagTracks(genre):
 		
 
 
-=======
->>>>>>> 7f24c7117ba6990f0b791a96320c7096fcf225f6
 def get_playlist_from_url(playlist_name):
 
 	playlist={"data":[]}

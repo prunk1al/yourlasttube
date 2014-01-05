@@ -45,396 +45,6 @@ class Handler(webapp2.RequestHandler):
 
 
 
-class MainPage(Handler):
-    def render_front(self,tracks=""):
-        self.render("front.html",tracks=tracks)
-
-    def get(self):
-       
-        tracks=[]
-        video=[]
-
-        
-        video=playlists.get_front_playlist()       
-       
-       
-        self.render_front(video)
-        
-        #taskqueue.add(url='/deleteBlobs',method='GET'); 
-
-
-    def post(self):
-        artist_name=self.request.get('artist')
-
-        artists=artist.search_artist(artist_name)
-        
-        if len(artists)==1:
-            self.redirect("/artist?mbid=%s"%artists[0].artist_mbid)
-        else:
-            for i in artists:
-                try:
-                    self.response.headers.add_header('Set-Cookie','yourlastube%s=%s:::%s'%(str(i.artist_mbid),str(i.artist_name.replace(' ','_').replace(",","_")),str(i.disambiguation.replace(' ','_'))))
-                except:
-                    pass
-            self.redirect("/disam")
-
-
-class deleteBlobs(Handler): 
-    def get(self): 
-        all = blobstore.BlobInfo.all(); 
-
-        for x in all:
-            logging.error(all.count())
-            logging.error(x)
-            t=x.delete()
-            logging.error(x)
-        more = (all.count()>0) 
-       # blobstore.delete(all); 
-        if more: 
-            taskqueue.add(url='/deleteBlobs',method='GET'); 
-
-
-class DisambiguationPage(Handler):
-    def render_disam(self, artists=""):
-        self.render("disambi.html",artists=artists)
-
-    def get(self):
-        c=self.request.cookies
-        artists=[]
-        nologo=[]
-
-        for i in c:
-        
-            if i[0:11]!='yourlastube':
-                pass
-            else:
-                name,disambiguation=c[i].split(":::")
-                name=name.replace("_"," ")
-                logging.error(i)
-                mbid=i[11:]
-                im=image.get_image(mbid,key='logo')
-                logging.error("DISAMBI")
-                logging.error(im)
-                if im != []:
-
-                    ar=[mbid,name,disambiguation,im]
-                    artists.append(ar)
-                    #taskqueue.add(url='/worker', params={'f':'artist.get_artist_mb("%s")'%mbid})
-                    #taskqueue.add(url='/worker', params={'f':'album.get_albums_mb("%s")'%mbid})
-                else:
-                    ar=[mbid,name,disambiguation,im]
-                    nologo.append(ar)
-
-
-                self.response.headers.add_header("Set-Cookie", "%s=deleted; Expires=Thu, 01-Jan-1970 00:00:00 GMT"%str(i))
-        
-        if len(artists)==1:
-            self.redirect("/artist?mbid=%s"%artists[0][0])
-        if len(artists)==0:
-            artists=nologo
-        self.render_disam(artists)
-
-class BandPage(Handler):
-   
-
-    def render_band(self,artist="",albums="",similar="",images=""):
-        
-        self.render("band.html",artist=artist,albums=albums,similar=similar,images=images)
-
-    def get(self):
-        mbid=self.request.get('mbid')
-        
-        data=memcache.get("bandpage %s"%mbid) 
-        if data is None:
-            
-            artist_mbid=mbid
-        
-            artist_data,album_data=artist.get_artist_albums(mbid)
-
-            album_data.sort(key=lambda tup: tup.album_date)
-       
-            """
-            for i in Class.Albums.query().iter():
-               
-                logging.error(i.key.parent().get())
-
-            """
-
-            similar=artist.get_similar(artist_mbid)
-
-            for s in similar:
-
-                taskqueue.add(url='/worker', params={'f':'artist.get_artist_albums("%s")'%s.artist_mbid})
-       
-          
-
-            data={"artist":artist_data,"albums":album_data,"similar":similar}
-            logging.debug(data)
-            """
-            data={  artist=Artists
-                    albums=[Albums]
-                    similar=[Artists]
-                    images=[background, logo]
-
-            """
-            memcache.set("bandpage %s"%artist_mbid, data)
-
-        self.render_band(**data)
-
-    def post(self):
-        mbid=self.request.get('mbid')
-        logging.error(mbid)
-        url="/artist?mbid=%s"%mbid
-        self.get()
-
-class AlbumPage(Handler):
-    def render_album(self,artist="",artist_mbid="",album="",tracks="",album_id="",bg="",logo=""):
-        self.render("album.html",artist=artist,artist_mbid=artist_mbid,album=album,tracks=tracks,album_id=album_id,bg=bg,logo=logo)
-
-    def get(self):
-
-        mbid=self.request.get('mbid')      
-        data=memcache.get("albumpage %s"%mbid) 
-        data=None
-        if data is None:
-        
-        
-            
-            album_data=album.get_album_data(mbid)
-
-            artist_data=album_data.key.parent().get()
-
-            tracks=track.get_tracks(mbid)
-            
-
-        
-            data={"artist":artist_data,"album":album_data,"tracks":tracks}
-            """
-                data={  artist=Artist
-                        album=Album
-                        tracks=[Tracks]
-                }
-            """
-            memcache.set("albumpage %s"%mbid,data) 
-        self.render_album(**data)
-
-
-class TrackPage(Handler):
-    def render_track(self,artist="",album="", track=""):
-        self.render("track.html",artist=artist,album=album, track=track)
-   
-    def get(self):
-       
-        track_mbid=self.request.get("mbid")
-        
-        track_data=Class.Tracks.query(Class.Tracks.track_mbid==track_mbid).get()
-
-
-        album_data=track_data.key.parent().get()
-        artist_data=album_data.key.parent().get()
-       
-        data={"artist":artist_data,"album":album_data,"track":track_data}
-       
-        self.render_track(**data)
-
-    def post(self):
-
-        song_mbid=self.request.get("mbid")
-        new_video=self.request.get("video")
-        artist=self.request.get("artist")
-        song=self.request.get("song")
-        for entity in Class.Tracks.query(Class.Tracks.track_mbid == song_mbid).fetch(1):
-            entity.video=new_video
-            #memcache.set(song_mbid,entity)
-            entity.put()
-            
-        
-        self.redirect("/track?mbid=%s"%song_mbid)
-
-class PlaylistPage(Handler):
-    def render_playlist(self,tracks="", tipo=""):
-        self.render("playlist.html",tracks=tracks, tipo=tipo)
-
-    def get(self):
-        tipo=self.request.get("tipo")
-        song=[]
-        if tipo=="album" or tipo == "artist":
-            mbid=self.request.get("mbid")
-
-            if tipo=="album":
-                song={"data":[]}
-
-                album_data=album.get_album_data(mbid)
-                artist_data=album_data.key.parent().get()
-                tracks=track.get_tracks(mbid)
-                tracks.sort(key=lambda tup: tup.track_number)
-                for i in tracks:
-                    video={"video_artist":artist_data.artist_name,"video_track":i.track_name,"playlist_videos":i.track_video}
-                    song["data"].append(video)
-
-            elif tipo=="artist":
-
-                song=playlists.get_echonest_playlist(tipo,mbid)
-                
-               
-                    
-        elif tipo=="lastfm":
-            modo=self.request.get("modo")
-
-            artists_mbid=[]
-            videos=[]
-            playlist=""
-            
-            tracks="tracks"
-            if modo=="hypped":
-                url=tools.get_url("lastfm","hyppedtracks", " ")
-            elif modo=="top":
-                url=tools.get_url("lastfm","toptracks"," ")
-            elif modo=="loved":
-                url=tools.get_url("lastfm","lovedtracks"," ")
-            elif modo=="tag":
-                
-                genre=self.request.get("genre")
-                
-                song=playlists.get_lastfmTag_playlist(genre)
-            
-
-        elif tipo=="echonest":
-            modo=self.request.get("modo")
-            if modo == 'radio':
-                mbid=self.request.get("mbid")
-                song=playlists.get_echonest_radio(tipo,mbid)
-            elif modo =='tag':
-                genre=self.request.get("genre")
-            
-                song=playlists.get_echonest_tag_radio(genre)
-        
-        logging.error(song)  
-        self.render_playlist(tracks=song, tipo=tipo)
-
-
-class ArtistsPage(Handler):
-    def render_artist(self,artist="",images="",menu="",next_page="",letter=""):
-        self.render("artist.html",artist=artist,images=images,menu=menu,next_page=next_page,letter=letter)
-
-    def get(self):
-        import image
-        letter=self.request.get('letter')
-        page=self.request.get('page')
-        
-        logging.error("letter '%s'"%letter)
-        logging.error("page '%s'"%page)
-
-        n=int(page)*9-9
-        
-        menu=[]
-        for i in string.ascii_uppercase:
-            menu.append(i)
-    
-
-        qry=Class.Artists.query(Class.Artists.letter == letter ).order(Class.Artists.artist_name).fetch(9,offset=n)
-               
-
-
-        images=[]
-        for i in qry:
-            mbid=i.artist_mbid
-            logo=image.get_image_url('logo',mbid)
-            if logo is None:
-                bg=image.get_image_url('bg',mbid)
-                if bg is not None:
-                    ima=bg+"=s200"
-                else:
-                    ima=None
-            else:
-                ima=logo+"=s200"
-            images.append([mbid,ima])
-
-        if len(qry) ==9:
-            next_page=int(page)+1
-        else:
-            next_page=0
-        
-        self.render_artist(qry,images,menu,next_page,letter=letter)
-
-    def post(self):
-        ar=self.request.get('artist')
-
-        mbid=artist.get_data(ar,d=True,I=True)
-        
-        if len(mbid)==1:
-            self.redirect("/artist?mbid=%s"%mbid[0].mbid)
-        else:
-            for i in mbid:
-                try:
-                    self.response.headers.add_header('Set-Cookie','%s=%s:::%s'%(str(i.mbid),str(i.artist.replace(' ','_').replace(",","_")),str(i.disambiguation.replace(' ','_'))))
-                except:
-                    pass
-            self.redirect("/disam")
-
-
-class LastFmPage(Handler):
-    
-    def get(self):
-        genres=memcache.get("lastfm genres")
-        if genres is not None:
-            self.render("last.html",genres=genres,key="lastfm")
-        else:
-            url=tools.get_url("lastfm","toptags"," ")
-            j=tools.get_json(url)
-
-            genres=[]
-            for i in j["tags"]["tag"]:
-
-                genres.append((i["name"],i["url"][23:]))
-
-            memcache.set("lastfm genres",genres)
-            logging.error(genres)
-            self.render("last.html",genres=genres)
-
-class EchonestPage(Handler):
-    
-    def get(self):
-        genres=memcache.get("echonest genres")
-        if genres is not None:
-            self.render("last.html",genres=genres,key="echonest")
-        else:
-            url=tools.get_url("echonest","tags"," ")
-            logging.error(url)
-            j=tools.get_json(url)
-
-            genres=[]
-            for i in j["response"]["terms"]:
-
-                genres.append([i["name"]])
-
-            memcache.set("echonest genres",genres)
-            logging.error(genres)
-            self.render("last.html",genres=genres,key="echonest")
-
-
-<<<<<<< HEAD
-=======
-
-
-
-
-
-
-
-
-
-
-
-
-class xhrArtist(Handler):
-    def get(self):
-        mbid=self.request.get('mbid') 
-        self.render("xhrArtist.html",artist=mbid)
->>>>>>> 7f24c7117ba6990f0b791a96320c7096fcf225f6
-
-
-
 
 class xhrLogo(Handler):
     def post(self):
@@ -470,7 +80,7 @@ class xhrSimilar(Handler):
         data=json.loads(j)
         mbid=data[10:-1]
         similar=None
-        #similar=memcache.get("similars of %s"%mbid)
+        similar=memcache.get("similars of %s"%mbid)
         if similar is None:
             similar=artist.get_xhrsimilar(mbid)
             for x in similar:
@@ -664,21 +274,10 @@ class Taga(Handler):
 
 class xhrFront(Handler):
     def renderFront(self, artists=None, playlist=None):
-<<<<<<< HEAD
         self.render("front2.html",artists=artists, playlist=playlist)
 
     def get(self):
         self.renderFront(playlist={"tipo":"predefined","tag":"top"})
-=======
-        logging.error(artists)
-        logging.error(playlist)
-        self.render("front2.html",artists=artists, playlist=playlist)
-        #self.render("xhrfront.html",artists=artists, playlist=playlist)
-
-    def get(self):
-        self.renderFront(playlist={"tipo":"predefined","tag":"top"})
-
->>>>>>> 7f24c7117ba6990f0b791a96320c7096fcf225f6
 
     def post(self):
         artist_name=self.request.get('artist')
@@ -686,46 +285,14 @@ class xhrFront(Handler):
         artists=artist.search_artist(artist_name)
         logging.error(artists)
         if len(artists)==1:
-<<<<<<< HEAD
             self.redirect("/artist/%s"%artists[0]["mbid"])
-=======
-            self.redirect("/artist/%s"%artists[0].artist_mbid)
->>>>>>> 7f24c7117ba6990f0b791a96320c7096fcf225f6
         else:
             logging.error(artists)
             self.renderFront(artists)
 
-<<<<<<< HEAD
 
 class Correct(Handler):
    
-=======
-class Artista(Handler):
-    def renderFront(self, artists=None, playlist=None):
-        logging.error(artists)
-        logging.error(playlist)
-        self.render("front2.html",artists=artists, playlist=playlist)
-
-    def get(self,resource):
-        import urllib
-
-        mbid=str(urllib.unquote(resource))
-
-        self.renderFront(playlist={"tipo":"artist","data":mbid})
-
-    def post(self,resource):
-        artist_name=self.request.get('artist')
-        logging.error(artist_name)
-        artists=artist.search_artist(artist_name)
-        logging.error(artists)
-        if len(artists)==1:
-            self.redirect("/artist/%s"%artists[0].artist_mbid)
-        else:
-            logging.error(artists)
-            self.renderFront(artists)
-        
-class xhrTopArtists(Handler):
->>>>>>> 7f24c7117ba6990f0b791a96320c7096fcf225f6
     def get(self):
         self.render("correct.html")
 
@@ -741,24 +308,30 @@ class getTopArtist(Handler):
     def get(self):
         url=tools.get_url("lastfm","topArtists"," ")
         j=tools.get_json(url)
-        artists=[]
-        for a in j["artists"]["artist"]:
-            artist={}
-            artist["name"]=a["name"]
-            artist["mbid"]=a["mbid"]
-            artists.append(artist)
+        artists=memcache.get("lastfm topArtists")
+        if artists is None:
+            artists=[]
+            for a in j["artists"]["artist"]:
+                artist={}
+                artist["name"]=a["name"]
+                artist["mbid"]=a["mbid"]
+                artists.append(artist)
+            memcache.set("lastfm topArtists",artists)
         self.response.out.write(json.dumps(artists))
 
 class getTopTags(Handler):
     def get(self):
         url=tools.get_url("lastfm","topTags"," ")
         j=tools.get_json(url)
- 
-        tags=[]
-        for t in j["tags"]["tag"]:
-            tag={}
-            tag["name"]=t["name"]
-            tags.append(tag)
+        tags=memcache.get("lastfm topTags")
+        if tags is None:
+            tags=[]
+            for t in j["tags"]["tag"]:
+                if t["name"]!="seen live":
+                    tag={}
+                    tag["name"]=t["name"]
+                    tags.append(tag)
+            memcache.set("lastfm topTags",tags)
         self.response.out.write(json.dumps(tags))
 
 class xhrCreateTagPlayList(Handler):
@@ -767,36 +340,34 @@ class xhrCreateTagPlayList(Handler):
         data=json.loads(j)
         genre=data["data"]
         data=None
+        data=memcache.get("create %s playlist"%genre)
+        if data is None:
+            url=tools.get_url("lastfm","genreCreate",genre)
+            logging.error(url)
+            result = urlfetch.fetch(url)      
+            page=urllib2.urlopen(url)
+            p=page.read()
+            j=json.loads(p)
 
-        url=tools.get_url("lastfm","genreCreate",genre)
-        logging.error(url)
-        result = urlfetch.fetch(url)      
-        page=urllib2.urlopen(url)
-        p=page.read()
-        logging.error(p)
-        j=json.loads(p)
-        logging.error(j)
-
-        
-        tracks=[]
-        for d in j["toptracks"]["track"]:
-            logging.error(d)
             
-            track={}
-            track["artist"]={}
-            track["artist"]["name"]=d["artist"]["name"]
-            mbid=d["artist"]["mbid"]
-            cmbid=CorrectArtist.by_id(mbid)
-            if cmbid is not None:
-                track["artist"]["mbid"]=cmbid.mbid
-            else:
-                track["artist"]["mbid"]=mbid
-            track["name"]=d["name"]
+            tracks=[]
+            for d in j["toptracks"]["track"]:
+                
+                track={}
+                track["artist"]={}
+                track["artist"]["name"]=d["artist"]["name"]
+                mbid=d["artist"]["mbid"]
+                cmbid=CorrectArtist.by_id(mbid)
+                if cmbid is not None:
+                    track["artist"]["mbid"]=cmbid.mbid
+                else:
+                    track["artist"]["mbid"]=mbid
+                track["name"]=d["name"]
 
-            tracks.append(track)
+                tracks.append(track)
 
-        data={"tracks":tracks}
-        logging.error(data)
+            data={"tracks":tracks}
+            memcache.set("create %s playlist"%genre, data)
         self.response.out.write(json.dumps(data))
 
 class xhrGetNextPl(Handler):
@@ -804,7 +375,6 @@ class xhrGetNextPl(Handler):
         j=self.request.body
         data=json.loads(j)
         logging.error(data)
-<<<<<<< HEAD
         if data["type"]=="artist":
             action="artistNext"
         elif data["type"]=="tag":
@@ -816,22 +386,10 @@ class xhrGetNextPl(Handler):
         page=urllib2.urlopen(url)
         p=page.read()
         j=json.loads(p)
-        logging.error(j)
-=======
-        cache=None
-        #cache=memcache.get("video of %s %s"%(data["name"],data["artist"]["name"]))
-        if cache is None:
-            data["ytid"]=track.get_video(data["artist"]["name"],data["name"])
-            data["img"]="http://img.youtube.com/vi/"+data["ytid"]+"/0.jpg"
-  
-            memcache.set("video of %s %s"%(data["name"],data["artist"]["name"]), data)
-        
-        self.response.out.write(json.dumps(data)) 
->>>>>>> 7f24c7117ba6990f0b791a96320c7096fcf225f6
+
 
         tracks=[]
         d=j["toptracks"]["track"]
-        logging.error(d)
         
         track={}
         track["artist"]={}
@@ -859,72 +417,36 @@ class xhrCreateArtistPlayList(Handler):
         data=json.loads(j)
         genre=data["data"]
         data=None
-
-<<<<<<< HEAD
-        url=tools.get_url("lastfm","artistCreate",genre)
-        logging.error(url)
-        result = urlfetch.fetch(url)      
-        page=urllib2.urlopen(url)
-        p=page.read()
-        j=json.loads(p)
-=======
-class xhrTagPlayList(Handler):
-    def post(self):
-        j=self.request.body
-        data=json.loads(j)
-        genre=data["data"]
->>>>>>> 7f24c7117ba6990f0b791a96320c7096fcf225f6
+        data=memcache.get("create %s playlist"%genre)
         
-
-        
-        tracks=[]
-        for d in j["toptracks"]["track"]:
-            logging.error(d)
+        if data is None:
+            url=tools.get_url("lastfm","artistCreate",genre)
+            logging.error(url)
+            result = urlfetch.fetch(url)      
+            page=urllib2.urlopen(url)
+            p=page.read()
+            j=json.loads(p)
             
-            track={}
-            track["artist"]={}
-            track["artist"]["name"]=d["artist"]["name"]
-            mbid=d["artist"]["mbid"]
-            cmbid=CorrectArtist.by_id(mbid)
-            if cmbid is not None:
-                track["artist"]["mbid"]=cmbid.mbid
-            else:
-                track["artist"]["mbid"]=mbid
-            track["name"]=d["name"]
 
-<<<<<<< HEAD
-            tracks.append(track)
-=======
-class xhrArtistPlayList(Handler):
-    def post(self):
-        j=self.request.body
-        data=json.loads(j)
-        genre=data["data"]
-        
-        data=playlists.getArtistTracks(genre)
+            
+            tracks=[]
+            for d in j["toptracks"]["track"]:
+                
+                track={}
+                track["artist"]={}
+                track["artist"]["name"]=d["artist"]["name"]
+                mbid=d["artist"]["mbid"]
+                cmbid=CorrectArtist.by_id(mbid)
+                if cmbid is not None:
+                    track["artist"]["mbid"]=cmbid.mbid
+                else:
+                    track["artist"]["mbid"]=mbid
+                track["name"]=d["name"]
 
-        tracks=[]
-        i=1
-
-        
-        for d in data["toptracks"]["track"]:
-            logging.error(d)
-    
-            track={}
-            track["artist"]={}
-            track["artist"]["name"]=d["artist"]["name"]
-            track["artist"]["mbid"]=d["artist"]["mbid"]
-            track["name"]=d["name"]
-            track["number"]=i
-            if tracks not in tracks:
                 tracks.append(track)
-                i+=1
-        
-        self.response.out.write(json.dumps(tracks))
->>>>>>> 7f24c7117ba6990f0b791a96320c7096fcf225f6
 
-        data={"tracks":tracks}
-        logging.error(data)
+            data={"tracks":tracks}
+            memcache.set("create %s playlist"%genre,data)
         self.response.out.write(json.dumps(data))
 
 class xhrGetNextArtistPl(Handler):
@@ -956,7 +478,6 @@ class xhrGetNextArtistPl(Handler):
         data={"tracks":tracks}
 
 
-<<<<<<< HEAD
         data={"tracks":tracks}
         self.response.out.write(json.dumps(tracks))
 
@@ -971,36 +492,6 @@ class SearchArtist(Handler):
        
         self.response.out.write(json.dumps(artists))
         
-=======
-
-
-class Taga(Handler):
-    def renderFront(self, artists=None, playlist=None):
-        logging.error(artists)
-        logging.error(playlist)
-        self.render("front2.html",artists=artists, playlist=playlist)
-
-    def get(self,resource):
-        import urllib
-
-        tag=str(urllib.unquote(resource))
-
-        self.renderFront(playlist={"tipo":"tag","data":tag})
-
-    def post(self,resource):
-        artist_name=self.request.get('artist')
-        logging.error(artist_name)
-        artists=artist.search_artist(artist_name)
-        logging.error(artists)
-        if len(artists)==1:
-            self.redirect("/tag/%s"%artists[0].artist_mbid)
-        else:
-            logging.error(artists)
-            self.renderFront(artists)
-  
-class Worker(Handler):
-    
->>>>>>> 7f24c7117ba6990f0b791a96320c7096fcf225f6
 
 class Buy7digital(Handler):
     def post(self):
@@ -1046,14 +537,4 @@ app = webapp2.WSGIApplication([('/', xhrFront),
                                ('/searchArtist',SearchArtist),
                                ('/Buy7digital',Buy7digital),('/BuyAmazon',BuyAmazon)
 
-<<<<<<< HEAD
-=======
-app = webapp2.WSGIApplication([('/', xhrFront),('/echonest',EchonestPage),('/lastfm',LastFmPage),('/deleteBlobs',deleteBlobs),('/artists',ArtistsPage),('/playlist',PlaylistPage),('/disam',DisambiguationPage),('/worker',Worker),
-                               ('/track', TrackPage),('/album',AlbumPage),('/artist', BandPage), 
-                               ('/xhrArtist', xhrArtist),('/xhrFront', xhrFront),('/xhrAlbum',xhrAlbum),('/xhrPlaylist',xhrPlaylist),
-                               ('/xhrLogo',xhrLogo),('/xhrAlbums', xhrAlbums),('/xhrAlbumImage', xhrAlbumImage),('/xhrSimilar', xhrSimilar),('/xhrTopArtists', xhrTopArtists),('/xhrFrontVideos', xhrFrontVideos),('/xhrGetVideo',xhrGetVideo),
-                               ('/xhrGetAlbumTracks',xhrGetAlbumTracks),('/xhrGetTrackVideo',xhrGetTrackVideo),('/xhrArtistImage',xhrArtistImage),('/xhrArtistInfo',xhrGetArtistInfo),('/xhrArtistTags',xhrGetArtistTags),
-                               ('/xhrTagPlayList',xhrTagPlayList),('/xhrArtistPlayList',xhrArtistPlayList),
-                               ('/artist/([^/]+)?', Artista),('/tag/([^/]+)?', Taga)
->>>>>>> 7f24c7117ba6990f0b791a96320c7096fcf225f6
                                ], debug=True)
