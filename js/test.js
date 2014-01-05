@@ -325,8 +325,8 @@ function getTopVideo(track){
             // do something to response
             console.log(this.responseText);
             var j=JSON.parse(this.responseText);
-            video={}
-            video["ytid"]=j["video"]
+            var video={}
+            video["ytid"]=j["ytid"]
             video["mbid"]=j["artist"]["mbid"]
             
             ytplist.push(video);

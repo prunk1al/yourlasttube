@@ -413,6 +413,25 @@ class EchonestPage(Handler):
             self.render("last.html",genres=genres,key="echonest")
 
 
+<<<<<<< HEAD
+=======
+
+
+
+
+
+
+
+
+
+
+
+
+class xhrArtist(Handler):
+    def get(self):
+        mbid=self.request.get('mbid') 
+        self.render("xhrArtist.html",artist=mbid)
+>>>>>>> 7f24c7117ba6990f0b791a96320c7096fcf225f6
 
 
 
@@ -645,10 +664,21 @@ class Taga(Handler):
 
 class xhrFront(Handler):
     def renderFront(self, artists=None, playlist=None):
+<<<<<<< HEAD
         self.render("front2.html",artists=artists, playlist=playlist)
 
     def get(self):
         self.renderFront(playlist={"tipo":"predefined","tag":"top"})
+=======
+        logging.error(artists)
+        logging.error(playlist)
+        self.render("front2.html",artists=artists, playlist=playlist)
+        #self.render("xhrfront.html",artists=artists, playlist=playlist)
+
+    def get(self):
+        self.renderFront(playlist={"tipo":"predefined","tag":"top"})
+
+>>>>>>> 7f24c7117ba6990f0b791a96320c7096fcf225f6
 
     def post(self):
         artist_name=self.request.get('artist')
@@ -656,14 +686,46 @@ class xhrFront(Handler):
         artists=artist.search_artist(artist_name)
         logging.error(artists)
         if len(artists)==1:
+<<<<<<< HEAD
             self.redirect("/artist/%s"%artists[0]["mbid"])
+=======
+            self.redirect("/artist/%s"%artists[0].artist_mbid)
+>>>>>>> 7f24c7117ba6990f0b791a96320c7096fcf225f6
         else:
             logging.error(artists)
             self.renderFront(artists)
 
+<<<<<<< HEAD
 
 class Correct(Handler):
    
+=======
+class Artista(Handler):
+    def renderFront(self, artists=None, playlist=None):
+        logging.error(artists)
+        logging.error(playlist)
+        self.render("front2.html",artists=artists, playlist=playlist)
+
+    def get(self,resource):
+        import urllib
+
+        mbid=str(urllib.unquote(resource))
+
+        self.renderFront(playlist={"tipo":"artist","data":mbid})
+
+    def post(self,resource):
+        artist_name=self.request.get('artist')
+        logging.error(artist_name)
+        artists=artist.search_artist(artist_name)
+        logging.error(artists)
+        if len(artists)==1:
+            self.redirect("/artist/%s"%artists[0].artist_mbid)
+        else:
+            logging.error(artists)
+            self.renderFront(artists)
+        
+class xhrTopArtists(Handler):
+>>>>>>> 7f24c7117ba6990f0b791a96320c7096fcf225f6
     def get(self):
         self.render("correct.html")
 
@@ -742,6 +804,7 @@ class xhrGetNextPl(Handler):
         j=self.request.body
         data=json.loads(j)
         logging.error(data)
+<<<<<<< HEAD
         if data["type"]=="artist":
             action="artistNext"
         elif data["type"]=="tag":
@@ -754,6 +817,17 @@ class xhrGetNextPl(Handler):
         p=page.read()
         j=json.loads(p)
         logging.error(j)
+=======
+        cache=None
+        #cache=memcache.get("video of %s %s"%(data["name"],data["artist"]["name"]))
+        if cache is None:
+            data["ytid"]=track.get_video(data["artist"]["name"],data["name"])
+            data["img"]="http://img.youtube.com/vi/"+data["ytid"]+"/0.jpg"
+  
+            memcache.set("video of %s %s"%(data["name"],data["artist"]["name"]), data)
+        
+        self.response.out.write(json.dumps(data)) 
+>>>>>>> 7f24c7117ba6990f0b791a96320c7096fcf225f6
 
         tracks=[]
         d=j["toptracks"]["track"]
@@ -786,12 +860,20 @@ class xhrCreateArtistPlayList(Handler):
         genre=data["data"]
         data=None
 
+<<<<<<< HEAD
         url=tools.get_url("lastfm","artistCreate",genre)
         logging.error(url)
         result = urlfetch.fetch(url)      
         page=urllib2.urlopen(url)
         p=page.read()
         j=json.loads(p)
+=======
+class xhrTagPlayList(Handler):
+    def post(self):
+        j=self.request.body
+        data=json.loads(j)
+        genre=data["data"]
+>>>>>>> 7f24c7117ba6990f0b791a96320c7096fcf225f6
         
 
         
@@ -810,7 +892,36 @@ class xhrCreateArtistPlayList(Handler):
                 track["artist"]["mbid"]=mbid
             track["name"]=d["name"]
 
+<<<<<<< HEAD
             tracks.append(track)
+=======
+class xhrArtistPlayList(Handler):
+    def post(self):
+        j=self.request.body
+        data=json.loads(j)
+        genre=data["data"]
+        
+        data=playlists.getArtistTracks(genre)
+
+        tracks=[]
+        i=1
+
+        
+        for d in data["toptracks"]["track"]:
+            logging.error(d)
+    
+            track={}
+            track["artist"]={}
+            track["artist"]["name"]=d["artist"]["name"]
+            track["artist"]["mbid"]=d["artist"]["mbid"]
+            track["name"]=d["name"]
+            track["number"]=i
+            if tracks not in tracks:
+                tracks.append(track)
+                i+=1
+        
+        self.response.out.write(json.dumps(tracks))
+>>>>>>> 7f24c7117ba6990f0b791a96320c7096fcf225f6
 
         data={"tracks":tracks}
         logging.error(data)
@@ -845,6 +956,7 @@ class xhrGetNextArtistPl(Handler):
         data={"tracks":tracks}
 
 
+<<<<<<< HEAD
         data={"tracks":tracks}
         self.response.out.write(json.dumps(tracks))
 
@@ -859,6 +971,36 @@ class SearchArtist(Handler):
        
         self.response.out.write(json.dumps(artists))
         
+=======
+
+
+class Taga(Handler):
+    def renderFront(self, artists=None, playlist=None):
+        logging.error(artists)
+        logging.error(playlist)
+        self.render("front2.html",artists=artists, playlist=playlist)
+
+    def get(self,resource):
+        import urllib
+
+        tag=str(urllib.unquote(resource))
+
+        self.renderFront(playlist={"tipo":"tag","data":tag})
+
+    def post(self,resource):
+        artist_name=self.request.get('artist')
+        logging.error(artist_name)
+        artists=artist.search_artist(artist_name)
+        logging.error(artists)
+        if len(artists)==1:
+            self.redirect("/tag/%s"%artists[0].artist_mbid)
+        else:
+            logging.error(artists)
+            self.renderFront(artists)
+  
+class Worker(Handler):
+    
+>>>>>>> 7f24c7117ba6990f0b791a96320c7096fcf225f6
 
 class Buy7digital(Handler):
     def post(self):
@@ -904,4 +1046,14 @@ app = webapp2.WSGIApplication([('/', xhrFront),
                                ('/searchArtist',SearchArtist),
                                ('/Buy7digital',Buy7digital),('/BuyAmazon',BuyAmazon)
 
+<<<<<<< HEAD
+=======
+app = webapp2.WSGIApplication([('/', xhrFront),('/echonest',EchonestPage),('/lastfm',LastFmPage),('/deleteBlobs',deleteBlobs),('/artists',ArtistsPage),('/playlist',PlaylistPage),('/disam',DisambiguationPage),('/worker',Worker),
+                               ('/track', TrackPage),('/album',AlbumPage),('/artist', BandPage), 
+                               ('/xhrArtist', xhrArtist),('/xhrFront', xhrFront),('/xhrAlbum',xhrAlbum),('/xhrPlaylist',xhrPlaylist),
+                               ('/xhrLogo',xhrLogo),('/xhrAlbums', xhrAlbums),('/xhrAlbumImage', xhrAlbumImage),('/xhrSimilar', xhrSimilar),('/xhrTopArtists', xhrTopArtists),('/xhrFrontVideos', xhrFrontVideos),('/xhrGetVideo',xhrGetVideo),
+                               ('/xhrGetAlbumTracks',xhrGetAlbumTracks),('/xhrGetTrackVideo',xhrGetTrackVideo),('/xhrArtistImage',xhrArtistImage),('/xhrArtistInfo',xhrGetArtistInfo),('/xhrArtistTags',xhrGetArtistTags),
+                               ('/xhrTagPlayList',xhrTagPlayList),('/xhrArtistPlayList',xhrArtistPlayList),
+                               ('/artist/([^/]+)?', Artista),('/tag/([^/]+)?', Taga)
+>>>>>>> 7f24c7117ba6990f0b791a96320c7096fcf225f6
                                ], debug=True)

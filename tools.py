@@ -87,7 +87,11 @@ def get_url(server,service,param):
         API_KEY=YOUTUBE_API
         SERVER='gdata.youtube.com'
         SERVICE='/feeds/api/videos?q='
+<<<<<<< HEAD
         params=artist+'+'+song+'&max-results=1&v=2&format=5&alt=json&hd=true&key='+API_KEY
+=======
+        params='"'+song+'+'+artist+'"&max-results=1&v=2&format=5&alt=json&orderby=viewCount&key='+API_KEY
+>>>>>>> 7f24c7117ba6990f0b791a96320c7096fcf225f6
         params=params.replace(" ","+")
 
 
