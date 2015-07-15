@@ -202,7 +202,7 @@ def get_image(mbid,key=""):
                 return None
 
             query=blobstore.BlobInfo.all().filter('filename =','logo_%s.png'%mbid)
-            if int(query.count()) >=1:
+            if query.get() is not None:
                 blob_key=query[0].key
             else:
                 blob_key=None
@@ -345,3 +345,7 @@ def get_image(mbid,key=""):
                     url=None
   
     return url
+
+
+
+

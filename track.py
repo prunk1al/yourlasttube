@@ -11,6 +11,62 @@ import async
 import Class
 
 
+class Track(ndb.Model):
+    artistKey=ndb.KeyProperty(required=False)
+    ytid=ndb.StringProperty(required=False)
+
+
+
+    def getVideo(self):
+
+        name, artist=self.key.id().split(' - ')
+
+        data=memcache.get("%s,%s"%(artist,name))
+
+        if data is None:
+            key=ndb.Key('Track',name+ ' - ' + artist)
+            data=key.get()
+
+        if data is None:
+            song=name.replace(" ","%20").replace("-","+").replace("'","")
+            data= None
+            #
+            
+            if data is None:
+                v=[]
+                if v !=[]:
+                    data=v[0].video
+                else:
+                    
+                    url=tools.get_url('youtube','video',[artist,name])
+                    logging.error(url)
+                    j=tools.getjson(url)
+                    
+                    data=j["items"][0]["id"]["videoId"]
+                    self.ytid=data
+                    data=self
+                    self.put()
+
+                    memcache.set("%s,%s"%(artist,name),self.ytid)
+
+        try:
+            self.ytid=data.ytid
+        except:
+            self.ytid=""
+      
+        
+        
+
+
+
+
+
+
+
+
+
+
+
 def get_tracks(mbid,key=None):
 
     tracks=memcache.get('get_tracks: %s'%mbid)

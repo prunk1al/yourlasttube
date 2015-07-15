@@ -14,7 +14,7 @@ body {
 #search {
     position: absolute;
     right: 0%;
-    top:100px;
+    top:10px;
 }
 #bottom {
     position: fixed;
@@ -115,5 +115,9 @@ p {
     width:auto;
     max-width: 500px;
     margin: 20px auto;
+}
+.menu{
+    top:10px;
+    position: relative;
 }
 

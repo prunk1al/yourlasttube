@@ -1,8 +1,8 @@
 from google.appengine.ext import ndb
 
 class CorrectArtist(ndb.Model):
-    name = ndb.StringProperty(required = True)
-    mbid = ndb.StringProperty(required = True)
+    name = ndb.StringProperty(required = True, indexed=False)
+    mbid = ndb.StringProperty(required = True, indexed=False)
     
 
     @classmethod

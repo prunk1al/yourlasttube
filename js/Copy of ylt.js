@@ -21,74 +21,30 @@ function EventedArray(handler) {
     };
     this.getArray = function() {
         return this.stack;
-    };
+    }
 }
 
 var playing;
 
 var handler = function() {
-	if(this.stack.length==1){
-		var track=this.stack[0];
-	    addFirstVideo(track);
-        putytImages(track);
-	}
-	else{
-		if(this.stack.length<=5){
-			var position=this.stack.length-1;
-			var track=this.stack[position];
-	        putytImages(track);
-		};
-	};
-};
-
-function EventedArray2(handler) {
-    this.stack = [];
-    this.isfirst = true;
-    this.hasfive = false;
-    this.mutationHandler = handler2 || function() {};
-    this.setHandler = function(f) {
-        this.mutationHandler = f;
-    };
-    this.callHandler = function() {
-        if (typeof this.mutationHandler === 'function') {
-            this.mutationHandler();
-        }
-    };
-    this.push = function(obj) {
-        this.stack.push(obj);
-        this.callHandler();
-    };
-    this.pop = function() {
-
-        return this.stack.pop();
-    };
-    this.getArray = function() {
-        return this.stack;
-    };
-}
-
-var handler2 = function() {
     if (this.isfirst) {
         this.isfirst = false;
-        var track = this.pop();
+        var track = this.pop()
         playing = track;
         
         track.active = true;
         var mbid=document.getElementById("accordion");
-            mbid.setAttribute("value",track.artist.mbid);
-        addFirstVideo(track);
+            mbid.setAttribute("value",track.artist.mbid)
+        addFirstVideo(track)
     }
     if (!this.hasfive) {
         if (this.getArray().length >= 5) this.hasfive = true;
-        getytTopImages(this);
+        getytTopImages(this)
     }
-
+    getNextPl();
 };
 
-
-
-
-var ytplist = new EventedArray2();
+var ytplist = new EventedArray();
 ytplist.setHandler(handler);
 
 var plistpage=0;
@@ -110,263 +66,274 @@ function Artist() {
 
 };
 
-getAndPut = function(artist) {
+Artist.prototype.getAndPut = function() {
  
 
-    getSimilar(artist);
-    getLogo(artist);
-    getArtistData(artist.mbid);
-    //artistCache.push(this);
+    this.getSimilar()
+    this.getLogo()
+    this.getData()
+    artistCache.push(this)
 
 };
 
-getArtistData=function(mbid) {
-    /***var artist=mbid;
+Artist.prototype.getData=function() {
+    var artist=this
     if (typeof this.info !== 'undefined' && typeof this.tags !== 'undefined' && artist.info != "" && artist.tags != ""){
         artist.putInfo();
         artist.putTags();
     }
-    else{**/
+    else{
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '/xhrArtistData', true);
         xhr.onload = function() {
-            var a=JSON.parse(this.responseText);
-            info = a["info"];
-            name=a["name"];
-            tags=a["tags"];
-
-            putArtistInfo(info);
-            putArtistRadio(name, mbid);
-            putArtistTags(tags);
+            a=JSON.parse(this.responseText);
+            artist.info = a["info"];
+            artist.name=a["name"];
+            artist.tags=a["tags"];
+            artist.putInfo();
+            artist.putTags();
         };
         var query = {
-            "artist": mbid
+            "artist": artist.mbid
         };
 
         xhr.send(JSON.stringify(query));
-    //};
-};
+    }
+}
 
-putArtistInfo = function(info, mbid) {
+
+
+Artist.prototype.putInfo = function() {
+
+
+
     var p = document.getElementById("artistInfo");
-    var txt = document.createTextNode(info);
+    var txt = document.createTextNode(this.info);
 
     if(p.childNodes[0].data.trim() != txt.data.trim()){
-        if (p.childNodes.length > 1) {
-        	p.removeChild(p.childNodes[1]);
-    	};
-    	p.appendChild(txt);
-    }
-};
+        
+    
 
-function putArtistRadio(name, mbid){
-	 var p = document.getElementById("ArtistRadio");
+    if (p.childNodes.length > 1) {
+        p.removeChild(p.childNodes[1]);
+    };
+    p.appendChild(txt);
+    }
+
+    var p = document.getElementById("ArtistRadio");
     if (p.hasChildNodes()) {
         for (var i = p.childNodes.length - 1; i >= 0; i--) {
             p.removeChild(p.childNodes[i]);
         };
     }
-    var a =document.createElement("a");
-        a.href="/artist-radio/"+ mbid;
-        var txt=document.createTextNode("Play "+ name +" Radio");
+    var a =document.createElement("a")
+        a.href="/artist-radio/"+this.mbid;
+        var txt=document.createTextNode("Play "+this.name+" Radio");
         a.appendChild(txt);
-    p.appendChild(a);
-};
+    p.appendChild(a)
 
-putArtistTags = function(tags) {
+}
 
-    var p = document.getElementById("artistTags");
-
-    for (var i = p.childNodes.length - 1; i >= 0; i--) {
-        p.removeChild(p.childNodes[i]);
-    };
-    for (var i = tags.length - 1; i >= 0; i--) {
-        var a = document.createElement("a");
-        a.appendChild(document.createTextNode(tags[i]));
-        a.href = "/tag/" + tags[i];
-        p.appendChild(a);
-        p.appendChild(document.createTextNode("    "));
-    };
-
-};
-
-
-getLogo = function(artist) {
-    if(artist.logo !="" && typeof artist.logo !== 'undefined' && artist.logo!=null){
-        putLogo(artist.logo,artist.name, artist.mbid);
+Artist.prototype.getLogo = function() {
+    if(this.logo !="" && typeof this.logo !== 'undefined' && this.logo!=null){
+        this.putLogo()
     }
     else{
-   
+        var artist = this
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '/xhrLogo', true);
         xhr.onloadstart=function() {
 
-            var div = document.getElementById("topLogo");
+            var div = document.getElementById("topLogo")
             if (div.hasChildNodes()) {
                 for (var i = div.childNodes.length - 1; i >= 0; i--) {
                     div.removeChild(div.childNodes[i]);
                 };
-            };
-            p=document.createElement("p");
-            txt=document.createTextNode("Fetching logo...."),
-            p.appendChild(txt);
-            div.appendChild(p);
+            }
+            p=document.createElement("p")
+            txt=document.createTextNode("Fetching logo....")
+            p.appendChild(txt)
+            div.appendChild(p)
             
-        };
+        }
         xhr.onload = function() {
             // do something to response
-            logo = this.responseText;
-            console.log(logo);           
-            putLogo(logo, artist.name, artist.mbid);
+            artist.logo = this.responseText
+            artist.putLogo();
         };
         var query = {"artist":artist.mbid };
         xhr.send(JSON.stringify(query));
+    }
+}
+Artist.prototype.getsLogo = function() {
+    var artist = this
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/xhrLogo', true);
+    xhr.onload = function() {
+        // do something to response
+        artist.logo = this.responseText
+        artist.putSimilar()
+
     };
-};
+    var query = {"artist":artist.mbid};
+    xhr.send(JSON.stringify(query));
 
-putLogo = function(logo, name, mbid) {
-    if (typeof logo==="undefined"){
-        logo="None";
+}
+
+Artist.prototype.putLogo = function() {
+    if (typeof this.logo==="undefined"){
+        this.logo="None"
     }
-    if (logo == "None") {
-        logo = "http://chart.apis.google.com/chart?chst=d_text_outline&chld=000000|38|h|FFFFFF|_|" + name;
+    if (this.logo == "None") {
+        this.logo = "http://chart.apis.google.com/chart?chst=d_text_outline&chld=000000|38|h|FFFFFF|_|" + this.name;
     }
 
-    img=document.getElementById("logo");
+    img=document.getElementById("logo")
 
     if (img != null){
         if (img.src==this.logo){
-            return;
+            return
         }
     }
 
-    var div = document.getElementById("topLogo");
+    var div = document.getElementById("topLogo")
     if (div.hasChildNodes()) {
         for (var i = div.childNodes.length - 1; i >= 0; i--) {
             div.removeChild(div.childNodes[i]);
         };
     }
-    var a = document.createElement("a");
-    a.href = "/artist/" + mbid;
+    var a = document.createElement("a")
+    a.href = "/artist/" + this.mbid;
     var img = document.createElement("img");
-    img.src = logo;
+    img.src = this.logo;
     img.style.width = "152px";
-    img.title = name;
+    img.title = this.name;
 
-    a.appendChild(img);
-    div.appendChild(a);
+    a.appendChild(img)
+    div.appendChild(a)
 
-};
+}
 
-getSimilar = function(artist) {
+Artist.prototype.getSimilar = function() {
     
-    if(artist.similars.length>0){
-        putSimilar(artist);
+    if(this.similars.length>0){
+        this.putSimilar();
     }
     else{
+        var artist = this
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '/xhrSimilar', true);
-        xhr.onloadstart=function() {
-
-            var table = document.getElementById("similarLogos");
-            clearSimilar();
-            var row=table.insertRow(0);
-            var cell=table.insertRow(0);
-            cell.innerHTML="Fetching Similars..."; 
-        };
         xhr.onload = function() {
             // do something to response
             var similars = JSON.parse(this.responseText);
-            console.log(this.responseText);
-            clearSimilar();
+            console.log(this.responseText)
+            artist.clearSimilar();
             for (var i = similars.length - 1; i >= 0; i--) {
-                similar = new Artist();
+                similar = new Artist()
                 similar.name = similars[i].name;
                 similar.mbid = similars[i].mbid;
                 //similar.logo = similar.getsLogo()
                 similar.logo = similars[i].logo;
-                artist.similars.push(similar);
+                artist.similars.push(similar)
                 if (artist.similars.length == similars.length) {
-                    putSimilar(artist);
+                    artist.putSimilar()
                 }
 
             };
-        };
-
-  		var query = '{"artist":' + artist.mbid + '}';
+        }
+    
+        var query = '{"artist":' + artist.mbid + '}';
         xhr.send(JSON.stringify(query));
     }
 };
 
-putSimilar = function(artist) {
+Artist.prototype.clearSimilar = function() {
+    var table = document.getElementById("similarLogos")
 
-    clearSimilar();
-    var table = document.getElementById("similarLogos");
+    for (var i = table.rows.length - 1; i >= 0; i--) {
+        table.deleteRow(i);
+    }
+}
 
-    for (var i = artist.similars.length - 1; i >= 0; i--) {
-        var similar = artist.similars[i];
+Artist.prototype.putSimilar = function() {
+
+    this.clearSimilar();
+    var table = document.getElementById("similarLogos")
+
+    for (var i = this.similars.length - 1; i >= 0; i--) {
+        var similar = this.similars[i]
 
         if (similar.logo == "None") {
             similar.logo = "http://chart.apis.google.com/chart?chst=d_text_outline&chld=000000|38|h|FFFFFF|_|" + similar.name;
         }
 
-        var tr = document.createElement("tr");
-            var div = document.createElement("div");
-                div.setAttribute("class", "image");
-                var a = document.createElement("a");
-                    a.href = "/artist/" + similar.mbid;
-                    a.setAttribute("class", "hcaption");
-                    a.setAttribute("data-target", "#" + similar.name);
+        var tr = document.createElement("tr")
+            var div = document.createElement("div")
+                div.setAttribute("class", "image")
+                var a = document.createElement("a")
+                    a.href = "/artist/" + similar.mbid
+                    a.setAttribute("class", "hcaption")
+                    a.setAttribute("data-target", "#" + similar.name)
                     var img = document.createElement("img");
                     img.src = similar.logo;
-                    img.id = similar.mbid;
-                    img.alt = similar.name;
-                    img.title = similar.name;
-                    img.style.height = "175px";
-                    img.style.width = "235px";
-                a.appendChild(img);
-            div.appendChild(a);
-                var text = document.createElement("div");
-                    text.id = similar.name;
-                    text.setAttribute("class", "text");
-                        var h5 = document.createElement("h5");
-                        text.appendChild(h5.appendChild(document.createTextNode(similar.name)));
+                    img.id = similar.mbid
+                    img.alt = similar.name
+                    img.title = similar.name
+                    img.style.height = "175px"
+                    img.style.width = "235px"
+                a.appendChild(img)
+            div.appendChild(a)
+                var text = document.createElement("div")
+                    text.id = similar.name
+                    text.setAttribute("class", "text")
+                        var h5 = document.createElement("h5")
+                        text.appendChild(h5.appendChild(document.createTextNode(similar.name)))
                     
-            div.appendChild(text);
+            div.appendChild(text)
   
         tr.appendChild(div);
-    table.appendChild(tr);
+    table.appendChild(tr)
 
     };
-};
-
-clearSimilar = function() {
-    var table = document.getElementById("similarLogos");
-
-    for (var i = table.rows.length - 1; i >= 0; i--) {
-        table.deleteRow(i);
-    };
-};
-
-
-function Track(nombre, artista) {
-    this.name = nombre;
-    this.artist = artista;
-    this.ytid = "";
-    this.img = "";
-    this.active = false;
 }
 
 
-searchVideo = function(track) {
+Artist.prototype.putTags = function() {
+
+    var p = document.getElementById("artistTags");
+
+    for (var i = p.childNodes.length - 1; i >= 0; i--) {
+        p.removeChild(p.childNodes[i])
+    };
+    for (var i = this.tags.length - 1; i >= 0; i--) {
+        var a = document.createElement("a")
+        a.appendChild(document.createTextNode(this.tags[i]))
+        a.href = "/tag/" + this.tags[i]
+        p.appendChild(a)
+        p.appendChild(document.createTextNode("    "))
+    };
+
+}
+
+function Track(nombre, artista) {
+    this.name = nombre
+    this.artist = artista
+    this.ytid = ""
+    this.img = ""
+    this.active = false;
+}
+
+Track.prototype.searchVideo = function() {
   
+
+    var track = this
     var xhr = new XMLHttpRequest();
     xhr.open('post', '/xhrGetVideo', true);
     xhr.onload = function() {
         // do something to response
         var response = JSON.parse(this.responseText);
-        track.img = response.img;
-        track.ytid = response.ytid;
+        track.img = response.img
+        track.ytid = response.ytid
         var ytlist = ytplist.getArray();
         var isin = false;
 
@@ -376,7 +343,7 @@ searchVideo = function(track) {
 
         if (ytlist.length == 0) {
             ytplist.push(track);
-            isin = true;
+            isin = true
         }
 
         for (var i = 0; i < ytlist.length; i++) {
@@ -391,39 +358,32 @@ searchVideo = function(track) {
         }
 
     };
-    xhr.send(JSON.stringify(track));
+    xhr.send(JSON.stringify(this));
 };
 
-
 function setPlayList(tipo, data) {
-    console.log(tipo);
+    console.log(tipo)
     if (tipo == "tag") {
         url = '/xhrCreateTagPlayList';
-        type="tag";
+        type="tag"
     } else if (tipo == "artist") {
         url = '/xhrCreateArtistPlayList';
-        type="artist";
+        type="artist"
     }
     else if (tipo=="artist-radio"){
-        url='/xhrCreateArtistRadio';
-        type="artist-radio";
+        url='/xhrCreateArtistRadio'
+        type="artist-radio"
     }
     else if (tipo == "predefined") {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', '/xhrFrontVideos', true);
-        xhr.onloadstart=function() {
-			var div = document.getElementById("ytImages");
-		    for (var i = div.childNodes.length - 1; i >= 0; i--) {
-		        div.removeChild(div.childNodes[i]);
-		    };
-		};
         xhr.onload = function() {
             // do something to response
             var response = JSON.parse(this.responseText);
             for (var i = 0; i < response.length; i++) {
                         
                 var r = response[i];
-				
+
                 var artist = new Artist();
                 artist.name = r["artist"]["name"];
                 artist.mbid = r["artist"]["mbid"];
@@ -433,14 +393,11 @@ function setPlayList(tipo, data) {
                 artist.info = r["artist"]["info"];
 
                 var track = new Track(r["name"], artist);
-                track.ytid = r["ytid"];
-                track.img = r["img"];
+                track.ytid = r["ytid"]
+                track.img = r["img"]
 
                 if (typeof track.ytid==="undefined"){
-                    //track.searchVideo();
-                    searchVideo(track);
-                    //getArtistData(artist);
-                    //getArtistInfo(artist);
+                    track.searchVideo()
                 }
                 else{
                     var ytlist = ytplist.getArray();
@@ -452,7 +409,7 @@ function setPlayList(tipo, data) {
 
                     if (ytlist.length == 0) {
                         ytplist.push(track);
-                        isin = true;
+                        isin = true
                     }
 
                     for (var j = 0; j < ytlist.length; j++) {
@@ -474,15 +431,7 @@ function setPlayList(tipo, data) {
     };
 
     var xhr = new XMLHttpRequest();
-    xhr.open('POST', url, true);
-    xhr.onloadstart=function() {
-		var div = document.getElementById("ytImages");
-	    for (var i = div.childNodes.length - 1; i >= 0; i--) {
-	        div.removeChild(div.childNodes[i]);
-	    };
-
-		
-	};
+    xhr.open('POST', url, false);
     xhr.onload = function() {
         var response = JSON.parse(this.responseText);
         plistpage=11;
@@ -519,7 +468,7 @@ function setPlayList(tipo, data) {
             track.img = r["img"]
 
             if (typeof track.ytid==="undefined"){
-                searchVideo(track)
+                track.searchVideo()
             }
             else{
                 var ytlist = ytplist.getArray();
@@ -557,31 +506,10 @@ function setPlayList(tipo, data) {
 };
 
 function changeArtist(artist) {
-    getAndPut(artist)
+    artist.getAndPut()
     getytTopImages()
 
 };
-
-
-function putytImages(track) {
-    var div = document.getElementById("ytImages");
- 	var end=div.childNodes.length;
-    var first = track;
-    var img = document.createElement("img");
-    img.src = first.img;
-    img.title = first.name + " - " + first.artist.name;
-    img.style.width = "85px";
-    img.style.height = "64px";
-    img.setAttribute("onclick", "parseVideo('" + first.ytid + "', '" + first.mbid + "')");
-    if (end ==2){
-    	img.style.border = "2px solid gold";
-    }
-    div.appendChild(img);
-};
-
-
-
-
 
 function getytTopImages() {
     var list = ytplist.getArray()
@@ -617,8 +545,10 @@ function addFirstVideo(track) {
 
     cueVideoById(video);
     var artist = video.artist;
-    getAndPut(artist);
-    //buyButton(video)
+    artist.active = true
+    artist.getAndPut();
+    getytTopImages();
+    buyButton(video)
 }
 
 function addVideo() {
@@ -629,7 +559,7 @@ function addVideo() {
     addVideoById(video)
     var artist = video.artist
     changeArtist(artist);
-    //buyButton(video);
+    buyButton(video);
 
 }
 
@@ -645,7 +575,7 @@ function parseVideo(ytid, mbid) {
     addVideoById(video)
     var artist = video.artist
     changeArtist(artist);
-    //buyButton(video)
+    buyButton(video)
 
 }
 
@@ -672,7 +602,6 @@ function getNextPl() {
     var xhr = new XMLHttpRequest();
     xhr.open('POST', '/xhrGetNextPl', true);
     xhr.onload = function() {
- 		console.log(this.responseText);
         var response = JSON.parse(this.responseText);
         response=response["tracks"]
 
@@ -689,7 +618,7 @@ function getNextPl() {
             track.img = r["img"]
 
             if (typeof track.ytid==="undefined"){
-                searchVideo(track)
+                track.searchVideo()
             }
             else{
                 var ytlist = ytplist.getArray();
@@ -763,18 +692,18 @@ function getTopTags() {
         var list = document.getElementById("topTags");
         var ul = document.createElement("ul");
 
-        var response = JSON.parse(this.responseText);
+        var response = JSON.parse(this.responseText)
         for (var i = 0; i < response.length; i++) {
-            tag = response[i];
-            var li = document.createElement("li");
-            var a = document.createElement("a");
-            a.href = "/tag/" + tag["name"];
-            a.appendChild(document.createTextNode(tag["name"]));
-            li.appendChild(a);
-            ul.appendChild(li);
+            tag = response[i]
+            var li = document.createElement("li")
+            var a = document.createElement("a")
+            a.href = "/tag/" + tag["name"]
+            a.appendChild(document.createTextNode(tag["name"]))
+            li.appendChild(a)
+            ul.appendChild(li)
 
         };
-        list.appendChild(ul);
+        list.appendChild(ul)
         $(function() {
             $('#main-menu').smartmenus();
         });

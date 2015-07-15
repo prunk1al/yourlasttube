@@ -1,5 +1,5 @@
 application: yourlastube
-version: 2
+version: 4
 runtime: python27
 api_version: 1
 threadsafe: yes
@@ -27,6 +27,6 @@ libraries:
   version: "latest"
 
 builtins:
-- appstats: off
+
 - remote_api: on
 - deferred: on 

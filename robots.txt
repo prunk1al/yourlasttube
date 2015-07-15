@@ -7,3 +7,9 @@ Disallow: /echonest
 Disallow: /playlist
 
 
+user-agent: *
+Disallow: /artists
+Disallow: /album
+Disallow: /track
+Disallow: /echonest
+Disallow: /playlist
