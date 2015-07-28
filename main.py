@@ -125,8 +125,9 @@ class xhrGetVideo(Handler):
         j=self.request.body
         data=json.loads(j)
         video=None
+        logging.error(data)
         video=memcache.get("video of %s %s"%(data["name"],data["artist"]["name"]))
-        trackKey=ndb.Key('Track',data["name"]+ " - " +data["artist"]["name"] )
+        trackKey=ndb.Key('Track',data["name"].replace("-", "")+ " - " +data["artist"]["name"] )
         track=trackKey.get()
         if track is None:
             track=Track(key=trackKey)
@@ -345,7 +346,7 @@ class getTopArtist(Handler):
                 artist["name"]=a["name"]
                 artist["mbid"]=a["mbid"]
                 artists.append(artist)
-            memcache.set("lastfm topArtists",artists)
+            #memcache.set("lastfm topArtists",artists)
         self.response.out.write(json.dumps(artists))
 
 class getTopTags(Handler):

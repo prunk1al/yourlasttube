@@ -1,4 +1,4 @@
-<html ng-app="ng-app">
+<html >
 
 <head>
     <!-- TradeDoubler site verification 2360947 -->
@@ -46,7 +46,9 @@
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
     <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
 
+    <!--
     <script type="text/javascript" src="/js/ylt.js"></script>
+    -->
     <link rel="stylesheet" type="text/css" href="/js/css/ylt.css" />
 
     <script src="/js/jquery.smartmenus.js" type="text/javascript"></script>
@@ -152,10 +154,11 @@ $(window).load(function() {
                     </li>
                     <li id="topArtists"><a href="#">Top Artists</a>
                         {%if artists is none%}
-                        <ul ng-controller="TopArtisListCtrl">
-                            <li ng-repeat="artist in artists">
-                                <a href="/artist/--artist.mbid--"> --artist.name-- </a>
+                        <ul id="TopArtisList" data-bind="foreach: topArtist">
+                            <li >
+                                <a data-bind="attr: {href:'/artist/'+mbid, title: name } , text: name"></a>
                             </li>
+                            
                         </ul>
                         {%else%}
                         <ul>
@@ -169,10 +172,11 @@ $(window).load(function() {
                     </li>
                     <li id="topTags"><a href="#">Top Tags</a>
                         {%if genres is none%}
-                        <ul ng-controller="TopTagsListCtrl">
-                            <li ng-repeat="tag in tags">
-                                <a href="/tag/--tag.name--"> --tag.name-- </a>
+                        <ul id="TopTags" data-bind="foreach: topTags">
+                            <li >
+                                <a data-bind="attr: {href:'/tag/'+name, title: name } , text: name"></a>
                             </li>
+                            
                         </ul>
                         {%else%}
                         <ul>
@@ -277,7 +281,7 @@ $(window).load(function() {
             <script>
             var tag = document.createElement('script');
 
-            tag.src = "https://www.youtube.com/iframe_api";
+            tag.src = "http://www.youtube.com/iframe_api";
             var firstScriptTag = document.getElementsByTagName('script')[0];
             firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
@@ -292,17 +296,35 @@ $(window).load(function() {
                         "onReady": onPlayerReady
                     }
                 });
+            
+            }
+
+            function addVideoById(video) {
+
+                player.loadVideoById(video["ytid"], 0, "large")
+
+            }
+
+            function cueVideoById(video) {
+
+                player.cueVideoById(video["ytid"], 0, "large")
+
+            }
+
+            function onPlayerStateChange(event) {
+
+                /*if (event.data == 0) {
+                    //addVideo();
+                }*/
             }
 
             function onPlayerReady() {
-                {%if playlist.tipo == "artist" or playlist.tipo == "artist-radio" %}
-                    setPlayList('{{playlist.tipo}}', "{{playlist.data.mbid}}") 
-                {%else%}
-                    setPlayList('{{playlist.tipo}}', '{{playlist.data.name}}') 
-                {%endif%}
-            }
-            </script>
+        playerReady=1
+        setPlayList();
 
+}
+            </script>
+            <div data-bind="html: helper"></div>
             <div id="rightPane">
 
 
@@ -402,7 +424,15 @@ $(window).load(function() {
 
 
     </div>
-   
+ 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.3.0/knockout-min.js"></script>
+    <script type="text/javascript" src="/js/model/topArtist.js"></script>
+    <script type="text/javascript" src="/js/model/artist.js"></script>
+    <script type="text/javascript" src="/js/model/tracks.js"></script>
+    <script type="text/javascript" src="/js/app/app.js"></script>
+
+
+
 </body>
 
 </html>

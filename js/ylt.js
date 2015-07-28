@@ -423,8 +423,8 @@ function setPlayList(tipo, data) {
             for (var i = 0; i < response.length; i++) {
                         
                 var r = response[i];
-				
-                var artist = new Artist();
+				console.log(response)
+                /*var artist = new Artist();
                 artist.name = r["artist"]["name"];
                 artist.mbid = r["artist"]["mbid"];
                 artist.logo = r["artist"]["logo"];
@@ -466,7 +466,7 @@ function setPlayList(tipo, data) {
                         ytplist.push(track);
                     }
 
-                }
+                }*/
             };
         };
         xhr.send();

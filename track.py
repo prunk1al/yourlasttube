@@ -18,7 +18,7 @@ class Track(ndb.Model):
 
 
     def getVideo(self):
-
+        logging.error(self)
         name, artist=self.key.id().split(' - ')
 
         data=memcache.get("%s,%s"%(artist,name))
