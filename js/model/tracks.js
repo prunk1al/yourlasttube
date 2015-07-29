@@ -1,10 +1,12 @@
 var viewModel=viewModel || {};
 
 viewModel.trackList=ko.observableArray([]);
-viewModel.firstVideo=ko.computed(function(){ return viewModel.trackList()[0]});
-viewModel.helper=ko.computed(function(){
-	return "<script>console.log("+viewModel.trackList()[0]+")</script>"
-})
+viewModel.currentVideo=ko.observable();
+viewModel.loadVideo=function(){
+    addVideoById(this.ytid())
+    viewModel.currentVideo(this);
+    viewModel.trackList.splice(viewModel.trackList.indexOf(this),1)
+}
 
 
 
@@ -12,35 +14,26 @@ viewModel.helper=ko.computed(function(){
 
 
 var Track=function(data){
+    var self=this;
     this.name = ko.observable(data.name);
     this.artist= ko.observable(data.artist);
-   
-    this.ytid= ko.computed(function(){
-    	if(typeof data.ytid  !== "undefined"){
-    		return data.ytid
-    	}
-    	else{
-			var send=JSON.stringify({name: this.name(), 
-								  artist: {name:this.artist().name()}});  		
-    		$.post('/xhrGetVideo',send,function(data){
-    			viewModel.trackList.push(this)
-    			return data.ytid
-    		});
-    	}
-    },this);
+    this.ytid=ko.observable();
     
-    this.img= ko.observable(function(){
-    	return "http://img.youtube.com/vi/"+this.ytid+"/0.jpg"
+    
+    this.img= ko.computed(function(){
+    	return "http://img.youtube.com/vi/"+self.ytid()+"/0.jpg"
     },this);
+
+    $.post('/xhrGetVideo',JSON.stringify({name: self.name(), 
+                                  artist: {name:self.artist().name()}}),function(data){
+                data=JSON.parse(data);
+                ytid=data.ytid
+                self.ytid(ytid);
+
+
+            });
+
 }
 
-
-
-new Track({
-	name:"",
-	artist:"",
-	ytid:" ",
-	img:" "
-})
 
 

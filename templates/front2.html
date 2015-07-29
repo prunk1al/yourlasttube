@@ -275,8 +275,9 @@ $(window).load(function() {
         <div id="contents">
 
 
-            <div id="ytImages"><p>Loading Playlist...</p> </div>
-
+            <div id="ytImages" data-bind="foreach: trackList">
+                <img data-bind="attr: {src: img}, visible: $index() <=5, click: $parent.loadVideo " width="125px">
+            </div>
             <div id="player"></div>
             <script>
             var tag = document.createElement('script');
@@ -301,7 +302,7 @@ $(window).load(function() {
 
             function addVideoById(video) {
 
-                player.loadVideoById(video["ytid"], 0, "large")
+                player.loadVideoById(video, 0, "large")
 
             }
 
@@ -320,11 +321,11 @@ $(window).load(function() {
 
             function onPlayerReady() {
         playerReady=1
-        setPlayList();
+
 
 }
             </script>
-            <div data-bind="html: helper"></div>
+
             <div id="rightPane">
 
 

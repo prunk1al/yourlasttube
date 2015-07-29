@@ -31,9 +31,6 @@ getArtistData=function(mbid) {
             name=a["name"];
             tags=a["tags"];
 
-            putArtistInfo(info);
-            putArtistRadio(name, mbid);
-            putArtistTags(tags);
         };
         var query = {
             "artist": mbid
