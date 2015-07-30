@@ -351,7 +351,8 @@ class getTopArtist(Handler):
 
 class getTopTags(Handler):
     def get(self):
-        tags=memcache.get("lastfm topTags")
+        tags=None
+        #tags=memcache.get("lastfm topTags")
         if tags is None:
             url=tools.get_url("lastfm","topTags"," ")
             j=tools.get_json(url)
@@ -466,46 +467,6 @@ class SearchArtist(Handler):
         self.response.out.write(json.dumps(artists))
         
 
-class Buy7digital(Handler):
-    def post(self):
-    
-        j=self.request.body
-        track=json.loads(j)
-        id=memcache.get("7digital of %s"%track)
-        if id is None:
-            url=tools.get_url("7digital", "buytrack", track)
-            logging.error(url)
-            xml=tools.get_xml(url)
-
-            tracka=xml.getElementsByTagName("track")
-
-            id=tracka[0].attributes.get("id").value
-
-            memcache.set("7digital of %s"%track,id)
-
-        self.response.out.write(json.dumps(id))
-
-class BuyAmazon(Handler):
-    def post(self):
-        if True:
-            asin=None
-            j=self.request.body
-            track=json.loads(j)
-            import bottlenose
-            amazon = bottlenose.Amazon("AKIAJBTO4RI6WUVCVFEA", "TGfzGuc+/U+t2jwNZSSIZrOrVlm8yDNZz0tij81+", "yolatu-21")
-            response = amazon.ItemSearch(Keywords=track["name"]+' '+track["artist"]["name"], SearchIndex="MP3Downloads")
-            logging.error("AMAZON")
-            from xml.dom import minidom
-            xml=minidom.parseString(response)
-            #logging.error(xml.toprettyxml())
-            items=xml.getElementsByTagName("Item")
-            for x in items:
-                if x.getElementsByTagName("Title")[0].childNodes[0].nodeValue==track["name"] and x.getElementsByTagName("Creator")[0].childNodes[0].nodeValue==track["artist"]["name"]:
-                    asin=x.getElementsByTagName("ASIN")[0].childNodes[0].nodeValue
-                    break;
-                    
-
-        self.response.out.write(json.dumps(asin))   
 
 class xhrArtistData(Handler):
      def post(self):
@@ -598,7 +559,7 @@ app = webapp2.WSGIApplication([('/', xhrFront),
                                ('/predefined',xhrFront),('/correctArtist',Correct),
                                ('/getTopArtist',getTopArtist),('/getTopTags',getTopTags),
                                ('/searchArtist',SearchArtist),
-                               ('/Buy7digital',Buy7digital),('/BuyAmazon',BuyAmazon),
+
                                ('/uploadblob',BlobstoreUpload)
 
                                ], debug=True)

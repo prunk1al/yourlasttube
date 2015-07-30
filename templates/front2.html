@@ -276,55 +276,49 @@ $(window).load(function() {
 
 
             <div id="ytImages" data-bind="foreach: trackList">
-                <img data-bind="attr: {src: img}, visible: $index() <=5, click: $parent.loadVideo " width="125px">
+                <img data-bind="attr: {src: img}, visible: $index() <=5, click: $parent.player.loadVideo " width="125px">
             </div>
-            <div id="player"></div>
-            <script>
-            var tag = document.createElement('script');
-
-            tag.src = "http://www.youtube.com/iframe_api";
-            var firstScriptTag = document.getElementsByTagName('script')[0];
-            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-            var player;
-
-            function onYouTubeIframeAPIReady() {
-                player = new YT.Player('player', {
-
-                    width: '598',
-                    events: {
-                        'onStateChange': onPlayerStateChange,
-                        "onReady": onPlayerReady
-                    }
-                });
             
-            }
+            <div id="player"></div>
+           
+            <script>
 
-            function addVideoById(video) {
-
-                player.loadVideoById(video, 0, "large")
-
-            }
-
-            function cueVideoById(video) {
-
-                player.cueVideoById(video["ytid"], 0, "large")
-
-            }
-
-            function onPlayerStateChange(event) {
-
-                /*if (event.data == 0) {
-                    //addVideo();
-                }*/
-            }
-
-            function onPlayerReady() {
-        playerReady=1
+                function onYouTubeIframeAPIReady() {
+                    player = new YT.Player('player', {
+                       
+                        width: '598',
+                        events: {
+                            'onStateChange': onPlayerStateChange,
+                            "onReady": onPlayerReady
+                        }
+                    });
+                                          
+                };
 
 
-}
+                function cueVideoById(video) {
+
+                    player.cueVideoById(video["ytid"], 0, "large")
+
+                };
+
+                function onPlayerStateChange(event) {
+
+                    /*if (event.data == 0) {
+                        //addVideo();
+                    }*/
+                }
+
+                function onPlayerReady(){
+                    console.log(this)
+
+                };
+
+                       
             </script>
+
+
+
 
             <div id="rightPane">
 
@@ -363,45 +357,10 @@ $(window).load(function() {
                     <br>
 
                 </center>
-                <!-- Social Buttons -->
 
-                <div id="example2">
-                    {%if playlist.tipo == 'predefined' %}
-                        <div id="shareme" data-url="http://www.yourlastube.com" data-text="Top Tracks Music Videos "></div>
-                    {%endif%} 
-                    {%if playlist.tipo == 'tag'%}
-                        <div id="shareme" data-url="http://www.yourlastube.com/tag/{{playlist.data}}" data-text="{{playlist.data}} Music Videos "></div>
-                    {%endif%} 
-                    {%if playlist.tipo == 'artist'%}
-                        <div id="shareme" data-url="http://www.yourlastube.com/artist/{{playlist.data.mbid}}" data-text="{{playlist.data.name}} Music Videos "></div>
-                    {%endif%}
-                    
-                </div>
-                <script>
-                $('#shareme').sharrre({
-                    share: {
-                        twitter: true,
-                        facebook: true,
-                        googlePlus: true
-                    },
-                    template: '<div class="box"><div class="left">Share</div><div class="middle"><a href="#" class="facebook">f</a><a href="#" class="twitter">t</a><a href="#" class="googleplus">+1</a></div><div class="right">{total}</div></div>',
-                    enableHover: false,
-                    enableTracking: true,
-                    render: function(api, options) {
-                        $(api.element).on('click', '.twitter', function() {
-                            api.openPopup('twitter');
-                        });
-                        $(api.element).on('click', '.facebook', function() {
-                            api.openPopup('facebook');
-                        });
-                        $(api.element).on('click', '.googleplus', function() {
-                            api.openPopup('googlePlus');
-                        });
-                    }
-                });
-                </script>
+            
+               
 
-                <!-- End onf social Buttons -->
 
             </div>
 
@@ -425,13 +384,16 @@ $(window).load(function() {
 
 
     </div>
- 
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.3.0/knockout-min.js"></script>
+ <!--
+    
     <script type="text/javascript" src="/js/model/topArtist.js"></script>
     <script type="text/javascript" src="/js/model/artist.js"></script>
     <script type="text/javascript" src="/js/model/tracks.js"></script>
     <script type="text/javascript" src="/js/app/app.js"></script>
-
+-->
+    <script type="text/javascript" src="/js/model/ko.js"></script>
 
 
 </body>
