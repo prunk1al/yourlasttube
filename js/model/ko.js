@@ -3,7 +3,7 @@ var Track=function(data){
     var self=this;
     this.name = ko.observable(data.name);
     this.artist= ko.observable(data.artist);
-    this.ytid=ko.observable();
+    this.ytid=ko.observable("");
     
     
     this.img= ko.computed(function(){
@@ -42,18 +42,19 @@ var Artist=function(data){
 
 
 
-
+var t={imt:'',
+    ytid:''}
 
 
 var viewModel=function(){
         var self=this;
 
-        this.trackList=ko.observableArray([]);
+        this.trackList=ko.observableArray();
         this.currentVideo=ko.observable();
-        this.topArtist=ko.observableArray([]);
-        this.topTags=ko.observableArray([]);
+        this.topArtist=ko.observableArray();
+        this.topTags=ko.observableArray();
         
-
+        console.log(this.currentVideo())
         this.init=function(){
             new self.topMenu();
             self.setPlayList();
@@ -116,18 +117,26 @@ var viewModel=function(){
                         data[i].artist=artist;
                         var track=new Track(data[i]);
                         self.trackList.push(track);
-
                     }
                 });
             };
+
+
+
+            
         };
 
+        this.nextVideo=function(event){
+            if (event.data===0){
+                self.changeCurrentVideo(self.trackList()[0])
+            }
+        }
 
         this.changeCurrentVideo=function(video){
-            console.log(this)
-            window.player.loadVideoById(video.ytid(), 0,"large")
-            self.currentVideo(video.ytid())
-            self.trackList.splice(self.trackList.indexOf(this),1)
+            self.trackList.splice(self.trackList.indexOf(video),1);
+            window.player.loadVideoById(video.ytid(), 0,"large");
+            self.currentVideo(video)
+            
         }
 
 this.init()
@@ -149,50 +158,53 @@ ko.bindingHandlers['player'] = {
                 window.playerReady = ko.observable(false);
                 window.onYouTubeIframeAPIReady = function() {
                     window.playerReady(true);
+                    
+                     if ( viewModel.trackList().length===0 ) {
+                        // YT hasn't invoked global callback.  Subscribe to update
+                        var subscription;
+                        subscription = viewModel.trackList.subscribe( function(newValue) {
+                            console.log(newValue)
+                             if ( newValue ) {
+                                 subscription.dispose();
+                                 // Just get this binding to fire again
+                                 var video=viewModel.trackList()[0].ytid
+                                if ( video() ==="" ) {
+                                    var subscription2;
+                                    subscription2 =  video.subscribe( function(newValue) {
+                                        console.log(newValue)
+                                         if ( newValue ) {
+                                             subscription2.dispose();
+                                             viewModel.currentVideo(viewModel.trackList()[0]);
+                                             viewModel.trackList.splice(viewModel.trackList.indexOf(viewModel.currentVideo()),1);
+                                             window.player = new YT.Player( element, {
+                                                height: 320,
+                                                width: 598,
+                                                videoId:viewModel.currentVideo().ytid(),
+                                                events: {
+                                                    'onStateChange': viewModel.nextVideo
+                                                }
+
+                                                });
+                                        }
+                                    });
+                                }
+                             }
+                        });
+                    }
+                    else{
+                        viewModel.currentVideo(viewModel.trackList()[0]);
+                        viewModel.trackList.splice(viewModel.trackList.indexOf(viewModel.currentVideo()),1);
+                         window.player = new YT.Player( element, {
+                            height: 320,
+                            width: 598,
+                            videoId:viewModel.currentVideo().ytid()
+                            });
+                    }
                 };
             }
             console.log(valueAccessor)
-        },
-        update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
-
-            var value = valueAccessor(),
-                id = viewModel.currentVideo(),
-                height = ko.unwrap(value.height) || '250',
-                width = ko.unwrap(value.width) || '444'
-            ;
-
-            var view=ko.bindingHandlers.foreach.update(element, valueAccessor,
-            allBindings, viewModel, bindingContext);
-
-            console.log(view)
-
-            if ( !window.playerReady() ) {
-                // YT hasn't invoked global callback.  Subscribe to update
-                var subscription;
-                subscription = window.playerReady.subscribe( function(newValue) {
-                     if ( newValue ) {
-                         subscription.dispose();
-                         // Just get this binding to fire again
-                         value.id.notifySubscribers(value.id());
-                     }
-                });
-            } else {
-                if ( !value.id()) {
-                
-                window.player = new YT.Player( element, {
-                    height: height,
-                    width: width,
-                });
-                  }
-                else{
-                var player = new YT.Player( element, {
-                    height: height,
-                    width: width,
-                    videoId: id 
-                });
-            }
-            }
-        },
+        }
+        
     }
     
 

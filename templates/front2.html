@@ -275,11 +275,14 @@ $(window).load(function() {
         <div id="contents">
 
 
-            <div id="ytImages" data-bind="foreach: trackList">
-                <img data-bind="attr: {src: img}, visible: $index() <=5, click: $parent.changeCurrentVideo " width="125px">
+            <div id="ytImages">
+                <div data-bind="text: currentVideo.img"></div>
+                <div data-bind="foreach: trackList">
+                    <img data-bind="attr: {src: img}, visible: $index() <=5, click: $parent.changeCurrentVideo " width="125px">
+                </div>
             </div>
             
-            <div id="player" data-bind="player: { id: currentVideo, height: '320', width: '598' }"></div><div data-bind="text: currentVideo"></div>
+            <div id="player" data-bind="player: { id: currentVideo, height: '320', width: '598' }"></div>
            
             
 
