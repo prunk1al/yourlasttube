@@ -27,25 +27,31 @@ var Track=function(data){
             self.getAsyncVideo()
         }
 
+
+
     };
 
+     $.post('/xhrGetVideo',JSON.stringify({name: self.name(), 
+                                          artist: {name:self.artist().name()}}),function(data){
+                        data=JSON.parse(data);
+                        ytid=data.ytid
+                        //localStorage.setItem(self.name()+"-"+ self.artist().name(), JSON.stringify(ytid))
+                        //self.updateVideo(ytid);
+                        self.ytid(ytid)
+
+            });
+
+/*
     this.updateVideo=function(data){
         self.ytid(data)
     }
 
     this.getAsyncVideo=function(){
-            $.post('/xhrGetVideo',JSON.stringify({name: self.name(), 
-                                          artist: {name:self.artist().name()}}),function(data){
-                        data=JSON.parse(data);
-                        ytid=data.ytid
-                        localStorage.setItem(self.name()+"-"+ self.artist().name(), JSON.stringify(ytid))
-                        self.updateVideo(ytid);
-
-            });
+            
     }
 
     this.init()
-
+*/
 }
 
 var Artist=function(data){
@@ -73,7 +79,7 @@ var Artist=function(data){
     this.init=function(){
         this.initData();
         //this.initLogo();
-        //this.initSimilars();
+        this.initSimilars();
     };
 
     

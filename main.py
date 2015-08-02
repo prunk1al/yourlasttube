@@ -56,13 +56,14 @@ class Handler(webapp2.RequestHandler):
 class xhrLogo(Handler):
     
     def post(self):
+        logging.error("INIT LOGO")
         j=self.request.body
         data=json.loads(j)
         mbid=data["artist"]
         logo=None
-        logo=memcache.get("v3 logo of %s"%mbid)
+        #logo=memcache.get("v3 logo of %s"%mbid)
         if logo is None:
-            
+            logging.error("LOGO NOT IN MEMCACHE")
             artist=ndb.Key("Artist",mbid)
             logging.error(artist)
             logo=getlogo(artist)
@@ -77,7 +78,8 @@ def getlogo(key):
         artist=Artist(key=key)
     try:
         logo=images.get_serving_url(artist.getLogo())
-    except:
+    except Exception as e:
+        logging.error(e)
         return ""
     return logo
 

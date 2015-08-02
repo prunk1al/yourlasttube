@@ -147,7 +147,7 @@ $(window).load(function() {
                 <form data-bind="submit: searchArtist" >
                     <input type="text" class="default-value" id="searchInput" name="artist" value="search"  />
 
-                    <button  type="submit"><img src="/js/lupa.png" width="12px"  /></button>
+                    <button  type="submit"><img src="/js/lupa.png" width="10px"  /></button>
 
                    
                 </form>
@@ -160,9 +160,8 @@ $(window).load(function() {
             
             <div id="topLogo" data-bind='with: currentVideo'>
                 <div data-bind="with: artist">
-                    <div id="loadingLogo">Loading Logo</div>
                      <a data-bind="attr:{href:'/artist/'+mbid()}" >
-                        <img data-bind="attr: {src: loadLogo()}" width="152px">
+                        <img data-bind="attr: {src: loadLogo(), alt: name, title: name}" width="152px">
                     </a>
                 </div>
             </div>
@@ -215,9 +214,8 @@ $(window).load(function() {
                 <center>
                     
                     <div data-bind='with: currentVideo'>
-                        <div data-bind="with: artist, loadSimilars()">
-                            <div data-bind="with: loadSimilars()">
-                            <table id="similarLogos" data-bind="foreach: $parent.similars">
+                        <div data-bind="with: artist">
+                            <table id="similarLogos" data-bind="foreach: similars">
                                 <tr>
                                 <td>
                                     <div class="image">
@@ -229,7 +227,6 @@ $(window).load(function() {
                                 </td>
                                 </tr>
                             </table>
-                            </div>
                         </div>
                     </div>
 

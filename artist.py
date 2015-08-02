@@ -170,13 +170,14 @@ class Artist(ndb.Model):
         return artist
 
     def getLogo(self):
+        self.logo=None
         if self.logo is None:
             mbid=self.key.id()
             logging.error("getting Logo")
             url=tools.get_url('fanart','artist',mbid)
             logging.error(url)
             j=tools.get_json(url) 
-            logging.eroro(url)
+            logging.error(url)
             logging.error(j)
             if j is None:
                 return None

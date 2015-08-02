@@ -125,8 +125,8 @@ def get_url(server,service,param):
 
     elif server=='fanart':
         
-        #SERVER='webservice.fanart.tv/'
-        SERVER='private-anon-32c079321-fanarttv.apiary-proxy.com/'
+        SERVER='webservice.fanart.tv/'
+        #SERVER='private-anon-32c079321-fanarttv.apiary-proxy.com/'
         API_KEY=FARNART_API
         mbid=param
         if service=='artist':
@@ -218,7 +218,10 @@ def get_json(url):
             page=urllib2.urlopen(url)
             p=page.read()
             memcache.set(url,p)
-        except:
+        except Exception as e:
+            logging.error("Error getting JSON from")
+            logging.error(url)
+            logging.error(e)
             return None
 
     j=json.loads(p)
@@ -230,10 +233,10 @@ def getjson(url):
         #time.sleep(1)
         logging.error(url)
         
-        result = urlfetch.fetch(url, method=urlfetch.GET ,headers = {'Cache-Control' : 'max-age=0, must-revalidate'})
-        p=result.content   
-        #page=urllib2.urlopen(url)
-        #p=page.read()
+        #result = urlfetch.fetch(url, method=urlfetch.GET ,headers = {'Cache-Control' : 'max-age=0, must-revalidate'})
+        #p=result.content   
+        page=urllib2.urlopen(url)
+        p=page.read()
         #memcache.set(url,p)
         
     j=json.loads(p)
