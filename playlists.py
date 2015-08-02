@@ -36,6 +36,7 @@ class Playlist:
 	param=""
 	page=0
 	session=""
+	status=""
 
 
 
@@ -51,16 +52,23 @@ class Playlist:
 		url=""
 		logging.error(url)
 		if self.tipo=="tag":
-			if {"name": self.param} in  echonest_genres["response"]["genres"]: 
-				echo=GenrePL(self.param)
-				echo.create()
-				self.tracks=echo.tracks
-				self.session=echo.session
-				#self.createEchoTag()
+			if {"name": self.param} not in  echonest_genres["response"]["genres"]: 
+				url=tools.get_url("echonest","similar",self.param)
 
-				actual=time.time() - time_start
-				logging.error("After create echo playlist= %s"%actual)
-				return
+				j=tools.getjson(url)
+				logging.error(j)
+				if j["response"]["status"]["message"] !="Success":
+					self.status= "Genre not in Echonest"
+					return self.status
+			echo=GenrePL(self.param)
+			echo.create()
+			self.tracks=echo.tracks
+			self.session=echo.session
+			#self.createEchoTag()
+
+			actual=time.time() - time_start
+			logging.error("After create echo playlist= %s"%actual)
+			return
 
 			url=tools.get_url("lastfm","genreCreate",self.param)
 		elif self.tipo=="artist":

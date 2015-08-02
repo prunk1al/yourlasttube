@@ -40,8 +40,9 @@ body {
 }
 #ytImages {
     position: absolute;
-    left: 95px;
+    left: 200px;
     top:400px;
+    width:600;
 }
 #buyButtons {
     position: absolute;

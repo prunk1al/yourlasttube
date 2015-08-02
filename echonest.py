@@ -64,8 +64,6 @@ class Dynamic:
 			track["artist"]["info"]=""
 			track["artist"]["tags"]=[]
 		track["name"]=d["title"]
-		logging.error(mbid)
-		logging.error(track)
 		self.tracks.append(track)
 
 	def create(self):

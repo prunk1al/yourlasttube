@@ -19,7 +19,9 @@ def get_url(server,service,param):
     LASTFM_API= '51293239750eea5095511e23b3107e31'
     #YOUTUBE_API='AI39si42ldETBAU7tY22n0DCKTn1jBDj3Hx4_RwMjQvzW27yyQ_q4QjekBC7rfEd80rMArD6wZxmngyEK0IDb9rUrN28uW6Ybw'
     YOUTUBE_API='AIzaSyCB-jA76V8khwXOCHnYrsZK2-Vu0skGmgs'
-    FARNART_API='32a11570b86e33ddd12310fb76d194ee'
+    #FARNART_API='32a11570b86e33ddd12310fb76d194ee'
+
+    FARNART_API='2991c2ff4f7fa0d59c479e19a7a9aad0'
     ECHONEST_API='EPOY20CBSSGYKV88Y'
     DIGITAL_API='7d76j73xawxh'
     
@@ -94,7 +96,7 @@ def get_url(server,service,param):
         
         SERVER='www.googleapis.com/youtube/'
         SERVICE='v3/search'
-        params='?part=id&q='+artist+'+'+song+' live&key='+API_KEY+"&type=video&videoEmbeddable=true&maxResults=1"
+        params='?part=id&q='+artist+'+'+song+' live&key='+API_KEY+"&type=video&videoEmbeddable=true&maxResults=1&safeSearch=moderate"
         params=params.replace(" ","+")
 
 
@@ -123,7 +125,8 @@ def get_url(server,service,param):
 
     elif server=='fanart':
         
-        SERVER='webservice.fanart.tv/'
+        #SERVER='webservice.fanart.tv/'
+        SERVER='private-anon-32c079321-fanarttv.apiary-proxy.com/'
         API_KEY=FARNART_API
         mbid=param
         if service=='artist':
@@ -160,6 +163,9 @@ def get_url(server,service,param):
         if service=="top":
             SERVICE='/api/v4/playlist/dynamic/create?'
             params='api_key='+API_KEY+'&format=json&artist_id=musicbrainz:artist:'+mbid+'&type=artist-radio&bucket=id:musicbrainz&limited_interactivity=true'
+        if service=="similar": 
+            SERVICE='/api/v4/genre/similar?'
+            params='api_key='+API_KEY+'&name='+mbid+'&bucket=description'
 
         
     elif server=="7digital":
@@ -209,8 +215,6 @@ def get_json(url):
         #time.sleep(1)
         logging.error(url)
         try:
-            result = urlfetch.fetch(url)
-            
             page=urllib2.urlopen(url)
             p=page.read()
             memcache.set(url,p)

@@ -60,7 +60,7 @@ class xhrLogo(Handler):
         data=json.loads(j)
         mbid=data["artist"]
         logo=None
-        #logo=memcache.get("v3 logo of %s"%mbid)
+        logo=memcache.get("v3 logo of %s"%mbid)
         if logo is None:
             
             artist=ndb.Key("Artist",mbid)
@@ -68,8 +68,8 @@ class xhrLogo(Handler):
             logo=getlogo(artist)
             
             memcache.set("v3 logo of %s"%mbid, logo)
-        
-        self.response.out.write(logo)    
+        logging.error(logo)
+        self.response.out.write(json.dumps(logo))
 @ndb.transactional(xg=True) 
 def getlogo(key):
     artist=key.get()
@@ -87,9 +87,9 @@ class xhrSimilar(Handler):
     def post(self):
         j=self.request.body
         data=json.loads(j)
-        mbid=data[10:-1]
+        mbid=data["artist"]
         similars=None
-        #similars=memcache.get("v3 similars of %s"%mbid)
+        similars=memcache.get("v3 similars of %s"%mbid)
         if similars is None:
 
             artist=ndb.Key("Artist",mbid)
@@ -346,13 +346,13 @@ class getTopArtist(Handler):
                 artist["name"]=a["name"]
                 artist["mbid"]=a["mbid"]
                 artists.append(artist)
-            #memcache.set("lastfm topArtists",artists)
+            memcache.set("lastfm topArtists",artists)
         self.response.out.write(json.dumps(artists))
 
 class getTopTags(Handler):
     def get(self):
         tags=None
-        #tags=memcache.get("lastfm topTags")
+        tags=memcache.get("lastfm topTags")
         if tags is None:
             url=tools.get_url("lastfm","topTags"," ")
             j=tools.get_json(url)
@@ -380,9 +380,13 @@ class xhrCreateTagPlayList(Handler):
             playlist=Playlist()
             playlist.tipo="tag"
             playlist.param=genre
-
-            playlist.create()
-            tracks={"tracks":playlist.getTracks(),"session":playlist.session}
+            
+            response=playlist.create()
+            logging.error(response)
+            if response =='Genre not in Echonest':
+               tracks=response
+            else:
+                tracks={"tracks":playlist.getTracks(),"session":playlist.session}
   
           
            
@@ -416,15 +420,18 @@ class xhrGetNextPl(Handler):
     def post(self):
         j=self.request.body
         data=json.loads(j)
-        if "type" in data:
-                if "session" in data:
-                    echo=Dynamic()
-                    echo.session=data["session"]
-                    echo.getNext()
-                    self.response.out.write(json.dumps({"tracks":[echo.tracks.pop()]}))
-                else:
-                    
-                    pass
+        logging.error(data)
+ 
+        if "session" in data:
+            echo=Dynamic()
+            echo.session=data["session"]
+            echo.getNext()
+            track=echo.tracks.pop()
+            logging.error(track)
+            self.response.out.write(json.dumps({"tracks":[track]}))
+        else:
+            
+            pass
 
 
              
@@ -436,7 +443,7 @@ class xhrCreateArtistPlayList(Handler):
         data=json.loads(j)
         genre=data["data"]
         tracks=None
-        #tracks=memcache.get("create %s playlist"%genre)
+        tracks=memcache.get("create %s playlist"%genre)
         
         if tracks is None:
 

@@ -1,4 +1,4 @@
-<html >
+<html>
 
 <head>
     <!-- TradeDoubler site verification 2360947 -->
@@ -43,21 +43,19 @@
 
     <meta property="og:image" content="http://www.yourlastube.com/js/logo.back.png" />
 
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-    <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+     <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+  <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
 
-    <!--
-    <script type="text/javascript" src="/js/ylt.js"></script>
-    -->
+    
     <link rel="stylesheet" type="text/css" href="/js/css/ylt.css" />
+    <link rel="stylesheet" type="text/css" href="/js/css/jquery-ui.css" />
 
     <script src="/js/jquery.smartmenus.js" type="text/javascript"></script>
     <link rel="stylesheet" type="text/css" href="/js/css/sm-core-css.css" />
     <link href='/js/css/sm-clean/sm-clean.css' rel='stylesheet' type='text/css' />
 
 
-    <script type="text/javascript" src="/js/jquery.sharrre.js"></script>
-    <link rel="stylesheet" type="text/css" href="/js/css/sharrre.css" />
+  
 
     <script src="/js/magnific-popup/jquery.magnific-popup.js"></script>
     <link rel="stylesheet" href="/js/magnific-popup/magnific-popup.css">
@@ -80,22 +78,7 @@ $(window).load(function() {
             width: 700
         });
     });
-    $(function() {
-        $("#accordion").accordion({
-            collapsible: true,
-            active: false,
-            heightStyle: "content"
-        });
-    });
-    $(function() {
-        $("#accordion-resizer").resizable({
-            minHeight: 90,
-            minWidth: 200,
-            resize: function() {
-                $("#accordion").accordion("refresh");
-            }
-        });
-    });
+
     </script>
 
   <!--script>
@@ -112,18 +95,6 @@ $(window).load(function() {
 
 
 <body>
-	<!--
-    <div id="fb-root"></div>
-    <script>
-    (function(d, s, id) {
-        var js, fjs = d.getElementsByTagName(s)[0];
-        if (d.getElementById(id)) return;
-        js = d.createElement(s);
-        js.id = id;
-        js.src = "//connect.facebook.net/es_ES/all.js#xfbml=1";
-        fjs.parentNode.insertBefore(js, fjs);
-    }(document, 'script', 'facebook-jssdk'));
-    </script-->
 
 
     {%if disambiguation is not none%}
@@ -153,133 +124,82 @@ $(window).load(function() {
                     <li><a href="/">Top Tracks</a>
                     </li>
                     <li id="topArtists"><a href="#">Top Artists</a>
-                        {%if artists is none%}
                         <ul id="TopArtisList" data-bind="foreach: topArtist">
                             <li >
                                 <a data-bind="attr: {href:'/artist/'+mbid, title: name } , text: name"></a>
                             </li>
                             
                         </ul>
-                        {%else%}
-                        <ul>
-                            {%for a in artists%}
-                            <li>
-                                <a href="/artist/{{a.mbid}}"> {{a.name}} </a>
-                            </li>
-                            {%endfor%}
-                        </ul>
-                        {%endif%}
                     </li>
                     <li id="topTags"><a href="#">Top Tags</a>
-                        {%if genres is none%}
+
                         <ul id="TopTags" data-bind="foreach: topTags">
                             <li >
-                                <a data-bind="attr: {href:'/tag/'+name, title: name } , text: name"></a>
+                                <a data-bind="attr: {href:'/tag/'+name, title: name }, text: name"></a>
                             </li>
                             
                         </ul>
-                        {%else%}
-                        <ul>
-                            {%for g in genres%}
-                            <li>
-                                <a href="/tag/{{g.name}}"> {{g.name}} </a>
-                            </li>
-                            {%endfor%}
-                        </ul>
-                        {%endif%}
                        
                     </li>
                 </ul>
 
                 <div id="search">
+                <form data-bind="submit: searchArtist" >
+                    <input type="text" class="default-value" id="searchInput" name="artist" value="search"  />
 
-                    <input type="text" class="default-value" id="searchInput" name="artist" value="search" />
+                    <button  type="submit"><img src="/js/lupa.png" width="12px"  /></button>
 
-                    <img src="/js/lupa.png" width="10px" onclick="searchArtist()" />
-
-                    <script type="text/javascript">
-                    $('.default-value').each(function() {
-                        var default_value = this.value;
-                        $(this).focus(function() {
-                            if (this.value == default_value) {
-                                this.value = '';
-                            }
-                        });
-                        $(this).blur(function() {
-                            if (this.value == '') {
-                                this.value = default_value;
-                            }
-                        });
-                    });
-                    $("input").keypress(function(event) {
-                        if (event.which == 13) {
-                            event.preventDefault();
-                            searchArtist()
-                        }
-                    });
-                    </script>
+                   
+                </form>
                 </div>
             </div>
 
         </div>
 
         <div id="left">
-            {%if artist is none or artist.logo is none%}
-            <div id="topLogo"><p>Logo Loading ....</p></div>
-            {%else%}
-            <div id="topLogo"><img src="{{artist.logo}}" title="Nightwish" style="width: 152px;" id="logo"></div>
-            {%endif%}
-            <div id="accordion-resizer" class="ui-widget-content">
-                <div id="accordion" >
-                  
-                    <h3>Artist Data</h3>
-                    {%if artist is none or artist.info is none%}
-                    <div>
-                        <p id="artistInfo">
-                        </p>
-                    </div>
-                    {%else%}
-                    <div>
-                        <p id="artistInfo">
-                            {{artist.info}}
-                        </p>
-                    </div>
-                    {%endif%}
-
-                    <h3>Tags Playlists</h3>
-                    {%if artist is none or artist.info is none%}
-                    <div id="artistTags">
-                        <p>
-                        </p>
-                    </div>
-                    {%else%}
-                    <div id="artistTags">
-                        <p>
-                        </p>
-                    </div>
-                    {%endif%}
-
-                    <h3>Artist Radio</h3>
-                    <div >
-                        <p id="ArtistRadio">
-                           
-                                <a id="arlink" ></a>
-                           
-                        </p>
-                    </div>
-                    
+            
+            <div id="topLogo" data-bind='with: currentVideo'>
+                <div data-bind="with: artist">
+                    <div id="loadingLogo">Loading Logo</div>
+                     <a data-bind="attr:{href:'/artist/'+mbid()}" >
+                        <img data-bind="attr: {src: loadLogo()}" width="152px">
+                    </a>
                 </div>
             </div>
+            
+            
+                
+                  
+                   <div data-bind='with: currentVideo'>
+                        <div data-bind="with: artist">
+                            <h3 data-bind="click: popupInfo, disable: isOpen">Artist Data</h3>
+                            <div  data-bind="dialog: { isOpen: isOpen, width: 400 }">
+                                <p data-bind="text: info, visible:true"}></p> 
+                            </div>
+                            <h3>Tags Playlists</h3>
+                             <div data-bind="foreach: tags, " >
+                                <a data-bind="attr:{href: '/tag/'+ $data}, text: $data"> </a>
+                             </div>
+
+                            <h3>Artist Radio</h3>
+                                <a data-bind="attr:{href: '/artist-radio/'+ mbid()}, text: name"></a>
+                        </div>
+                    </div>
+                    
         </div>
 
         <div id="contents">
 
 
             <div id="ytImages">
-                <div data-bind="text: currentVideo.img"></div>
+                                
                 <div data-bind="foreach: trackList">
-                    <img data-bind="attr: {src: img}, visible: $index() <=5, click: $parent.changeCurrentVideo " width="125px">
+                    
+                    <img data-bind="attr: {src: img, title:name}, visible: $index() <=9, click: $parent.youtube.changeCurrentVideo " width="100px">
+                    
                 </div>
+                </tr>
+                </table>
             </div>
             
             <div id="player" data-bind="player: { id: currentVideo, height: '320', width: '598' }"></div>
@@ -294,31 +214,25 @@ $(window).load(function() {
 
                 <center>
                     
-                    <table id="similarLogos">
-                    {%if artist is none or artist.similars==[]%}
-                    <tr><td>
-                    <p>Similar Artists Loading....</p>
-                    </td>
-                    </tr>
-                    {%else%}
-                        {%for s in artist.similars%}
-                       
-                        <tr id="{{s.mbid}}">
-                            <td>
-                            <div class="image">
-                                <a href="/artist/{{s.mbid}}" class="hcaption" data-target="#{{s.name}}">
-                                    <img src="{{s.logo}}" id="{{s.mbid}}" alt="{{s.name}}" title="{{s.name}}" style="height: 175px; width: 235px;">
-                                </a>
-                                <div id="{{s.name}}" class="text">{{s.name}}</div>
+                    <div data-bind='with: currentVideo'>
+                        <div data-bind="with: artist, loadSimilars()">
+                            <div data-bind="with: loadSimilars()">
+                            <table id="similarLogos" data-bind="foreach: $parent.similars">
+                                <tr>
+                                <td>
+                                    <div class="image">
+                                        <a data-bind="attr:{href:'/artist/'+mbid, 'data-target':'#'+name}" class="hcaption">
+                                            <img data-bind="attr : { src: logo, id: mbid, alt: name, tilte:name}" style="height: 175px; width: 235px;">
+                                        </a>
+                                        <div data-bind="attr: {id: name}, text: name" class="text"></div>
+                                    </div>
+                                </td>
+                                </tr>
+                            </table>
                             </div>
-                            </td>
-                        </tr>
+                        </div>
+                    </div>
 
-                        {%endfor%}
-                    {%endif%}
-                        
-                    </table>
-                    
 
 
                     <br>
@@ -354,13 +268,7 @@ $(window).load(function() {
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.3.0/knockout-min.js"></script>
- <!--
-    
-    <script type="text/javascript" src="/js/model/topArtist.js"></script>
-    <script type="text/javascript" src="/js/model/artist.js"></script>
-    <script type="text/javascript" src="/js/model/tracks.js"></script>
-    <script type="text/javascript" src="/js/app/app.js"></script>
--->
+    <script src="/js/knockout-jqueryui.min.js"></script>
     <script type="text/javascript" src="/js/model/ko.js"></script>
 
 
