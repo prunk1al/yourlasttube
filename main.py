@@ -1,4 +1,3 @@
-
 import urllib2
 import os
 import webapp2
@@ -51,7 +50,49 @@ class Handler(webapp2.RequestHandler):
 
 
 
+class xhrGetVideo(Handler):
 
+    def post(self):
+    
+        j=self.request.body
+        data=json.loads(j)
+        video=None
+        logging.error(data)
+        video=memcache.get("video of %s %s"%(data["name"],data["artist"]["name"]))
+        trackKey=ndb.Key('Track',data["name"].replace("-", "")+ " - " +data["artist"]["name"] )
+        track=trackKey.get()
+        if track is None:
+            track=Track(key=trackKey)
+            track.getVideo()
+
+        video={}
+        video["ytid"]=track.ytid
+        video["img"]="http://img.youtube.com/vi/"+video["ytid"]+"/0.jpg"
+
+  
+        memcache.set("video of %s %s"%(data["name"],data["artist"]["name"]), video)
+        
+        self.response.out.write(json.dumps(video)) 
+
+
+
+class xhrArtistData(Handler):
+     def post(self):
+        j=self.request.body
+        data=json.loads(j)
+        mbid=data["artist"]
+        data=None
+        key=ndb.Key("Artist",mbid)
+        a=key.get()
+        if a is None:
+            a=Artist(key=key)
+
+        data={"name":a.getName(),
+                "info":a.getInfo(),
+                "tags":a.getTags()             
+        }
+        
+        self.response.out.write(json.dumps(data))
 
 class xhrLogo(Handler):
     
@@ -119,30 +160,110 @@ def sjson(s):
             }
     return similar    
 
+class getTopArtist(Handler):
+    def get(self):
+        artists=memcache.get("lastfm topArtists")
+        if artists is None:
+            url=tools.get_url("lastfm","topArtists"," ")
+            j=tools.get_json(url)
+            artists=[]
+            for a in j["artists"]["artist"]:
+                artist={}
+                artist["name"]=a["name"]
+                artist["mbid"]=a["mbid"]
+                artists.append(artist)
+            memcache.set("lastfm topArtists",artists)
+        self.response.out.write(json.dumps(artists))
 
-class xhrGetVideo(Handler):
+class getTopTags(Handler):
+    def get(self):
+        tags=None
+        tags=memcache.get("lastfm topTags")
+        if tags is None:
+            url=tools.get_url("lastfm","topTags"," ")
+            j=tools.get_json(url)
+            tags=[]
+            for t in j["tags"]["tag"]:
+                if t["name"]!="seen live":
+                    tag={}
+                    tag["name"]=t["name"]
+                    tags.append(tag)
+            memcache.set("lastfm topTags",tags)
+        self.response.out.write(json.dumps(tags))
 
+
+class xhrCreateTagPlayList(Handler):
     def post(self):
-    
+        logging.error("xhrCreateTagPlayList")
         j=self.request.body
         data=json.loads(j)
-        video=None
-        logging.error(data)
-        video=memcache.get("video of %s %s"%(data["name"],data["artist"]["name"]))
-        trackKey=ndb.Key('Track',data["name"].replace("-", "")+ " - " +data["artist"]["name"] )
-        track=trackKey.get()
-        if track is None:
-            track=Track(key=trackKey)
-            track.getVideo()
-
-        video={}
-        video["ytid"]=track.ytid
-        video["img"]="http://img.youtube.com/vi/"+video["ytid"]+"/0.jpg"
-
-  
-        memcache.set("video of %s %s"%(data["name"],data["artist"]["name"]), video)
+        genre=data["data"]
         
-        self.response.out.write(json.dumps(video)) 
+        tracks=None
+        #tracks=memcache.get("create %s playlist"%genre)
+        
+        if tracks is None:
+
+            playlist=Playlist()
+            playlist.tipo="tag"
+            playlist.param=genre
+            
+            response=playlist.create()
+            logging.error(response)
+            if response =='Genre not in Echonest':
+               tracks=response
+            else:
+                tracks={"tracks":playlist.getTracks(),"session":playlist.session}
+  
+        self.response.out.write(json.dumps(tracks))
+
+class xhrArtistRadio(Handler):
+    def post(self):
+        logging.error("xhrCreateTagPlayList")
+        j=self.request.body
+        data=json.loads(j)
+        genre=data["data"]
+        
+        tracks=None
+  
+        
+        if tracks is None:
+
+            playlist=Playlist()
+            playlist.tipo="artist-radio"
+            playlist.param=genre
+
+            playlist.create()
+            tracks={"tracks":playlist.getTracks(),"session":playlist.session}
+  
+          
+           
+        self.response.out.write(json.dumps(tracks))
+
+
+
+class xhrCreateArtistPlayList(Handler):
+    def post(self):
+        j=self.request.body
+        data=json.loads(j)
+        genre=data["data"]
+        tracks=None
+        tracks=memcache.get("create %s playlist"%genre)
+        
+        if tracks is None:
+
+            playlist=Playlist()
+            playlist.tipo="artist"
+            playlist.param=data["data"]
+
+            playlist.create()
+            tracks={"tracks":playlist.getTracks(),"session":playlist.session}
+
+        
+
+            memcache.set("create %s playlist"%genre,tracks)
+        self.response.out.write(json.dumps( tracks))
+
 
 
 class xhrFrontVideos(Handler):
@@ -163,64 +284,57 @@ class xhrFrontVideos(Handler):
         self.response.out.write(json.dumps(tracks))
 
 
-class xhrTagPlayList(Handler):
-    def post(self):
-        # This is the main function for profiling
-        # We've renamed our original main() above to real_main()
-        import cProfile, pstats
-        prof = cProfile.Profile()
-        prof = prof.runctx("self.real_post()", globals(), locals())
-        print "<pre>"
-        stats = pstats.Stats(prof)
-        stats.sort_stats("cumulative")  # Or cumulative
-        stats.print_stats(80)  # 80 = how many to print
-        # The rest is optional.
-        # stats.print_callees()
-        # stats.print_callers()
-        print "</pre>"
-
-    def real_post(self):
-        import time
-        time_star=time.time()
-
-        j=self.request.body
-        data=json.loads(j)
-        genre=data["data"]
-        tracks=None
-        tracks=memcache.get("%s Videos playlist"%genre)
-        if tracks is None:
-
-            playlist=Playlist()
-            playlist.tipo="artist"
-            playlist.param=data["data"]
-
-            playlist.create()
-            tracks=playlist.getTracks()
-            memcache.set("%s Videos playlist"%genre, tracks)
-        logging.error("total time of playlist= %s"%(time.time()-time.start()))
-        self.response.out.write(json.dumps(tracks))
-
-
-class xhrArtistPlayList(Handler):
+class xhrGetNextPl(Handler):
     def post(self):
         j=self.request.body
         data=json.loads(j)
-        genre=data["data"]
-        tracks=None
-        tracks=memcache.get("%s Videos playlist"%genre)
+        logging.error(data)
+ 
+        if "session" in data:
+            echo=Dynamic()
+            echo.session=data["session"]
+            echo.getNext()
+            track=echo.tracks.pop()
+            logging.error(track)
+            self.response.out.write(json.dumps({"tracks":[track]}))
+        else:
+            
+            pass
 
-        if tracks is None:
-            playlist=Playlist()
-            playlist.tipo="artist"
-            playlist.param=data["data"]
 
-            playlist.create()
-            tracks=playlist.getTracks()
-
-         
-            memcache.set("%s Videos playlist"%genre, tracks)
         
-        self.response.out.write(json.dumps(tracks))
+
+class SearchArtist(Handler):
+    def post(self):
+        import artist
+        j=self.request.body
+        data=json.loads(j)
+        artist_name=data["name"]
+        logging.error(artist_name)
+        artists=artist.search_artist(artist_name)
+
+       
+        self.response.out.write(json.dumps(artists))
+
+
+
+
+class xhrFront(Handler):
+    def renderFront(self, artists=None, genres=None ,playlist=None, disambiguation=None, artist=None):
+        self.render("front2.html",artists=artists, genres=genres,playlist=playlist,disambiguation=disambiguation, artist=artist)
+
+
+    def get(self):
+
+        self.renderFront(artists=memcache.get("lastfm topArtists"), genres=memcache.get("lastfm topTags"), playlist={"tipo":"predefined","data":{"name":"top"}})
+
+    def post(self):
+        artist_name=self.request.get('artist')
+        artists=artist.search_artist(artist_name)
+        if len(artists)==1:
+            self.redirect("/artist/%s"%artists[0]["mbid"])
+        else:
+            self.renderFront(disambiguation=artists)
 
 
 
@@ -229,24 +343,8 @@ class Artista(Handler):
         self.render("front2.html",artists=artists, genres=genres,playlist=playlist,disambiguation=disambiguation, artist=artist)
 
     def get(self,resource):
-        import urllib
 
-        mbid=str(urllib.unquote(resource))
-        key=ndb.Key("Artist",mbid)
-        artist=key.get()
-        logging.error(artist)
-        if artist is None:
-            artist=Artist(key=key)
-            name=artist.getName()
-            self.renderFront(artists=memcache.get("lastfm topArtists"), genres=memcache.get("lastfm topTags"), playlist={"tipo":"artist","data":{"mbid":mbid, "name":name}})
-
-
-        else:
-            artista=artist.toJson()
-            logging.error(artista)
-            name=artist.name
-
-            self.renderFront(artists=memcache.get("lastfm topArtists"), genres=memcache.get("lastfm topTags"), playlist={"tipo":"artist","data":{"mbid":mbid, "name":name}}, artist=artista)
+        self.renderFront(artists=memcache.get("lastfm topArtists"), genres=memcache.get("lastfm topTags"))
 
     def post(self,resource):
         artist_name=self.request.get('artist')
@@ -304,196 +402,7 @@ class ArtistRadio(Handler):
         else:
             self.renderFront(disambiguation=artists)
 
-
-class xhrFront(Handler):
-    def renderFront(self, artists=None, genres=None ,playlist=None, disambiguation=None, artist=None):
-        self.render("front2.html",artists=artists, genres=genres,playlist=playlist,disambiguation=disambiguation, artist=artist)
-
-
-    def get(self):
-
-        self.renderFront(artists=memcache.get("lastfm topArtists"), genres=memcache.get("lastfm topTags"), playlist={"tipo":"predefined","data":{"name":"top"}})
-
-    def post(self):
-        artist_name=self.request.get('artist')
-        artists=artist.search_artist(artist_name)
-        if len(artists)==1:
-            self.redirect("/artist/%s"%artists[0]["mbid"])
-        else:
-            self.renderFront(disambiguation=artists)
-
-
-class Correct(Handler):
-   
-    def get(self):
-        self.render("correct.html")
-
-    def post(self):
-        name=self.request.get('name')
-        wrong=self.request.get("wrong")
-        right=self.request.get("right")
-        c=CorrectArtist(name=name, mbid=right, key=ndb.Key('CorrectArtist',wrong))
-        c.put()
-        self.redirect("/correctArtist")
-
-class getTopArtist(Handler):
-    def get(self):
-        artists=memcache.get("lastfm topArtists")
-        if artists is None:
-            url=tools.get_url("lastfm","topArtists"," ")
-            j=tools.get_json(url)
-            artists=[]
-            for a in j["artists"]["artist"]:
-                artist={}
-                artist["name"]=a["name"]
-                artist["mbid"]=a["mbid"]
-                artists.append(artist)
-            memcache.set("lastfm topArtists",artists)
-        self.response.out.write(json.dumps(artists))
-
-class getTopTags(Handler):
-    def get(self):
-        tags=None
-        tags=memcache.get("lastfm topTags")
-        if tags is None:
-            url=tools.get_url("lastfm","topTags"," ")
-            j=tools.get_json(url)
-            tags=[]
-            for t in j["tags"]["tag"]:
-                if t["name"]!="seen live":
-                    tag={}
-                    tag["name"]=t["name"]
-                    tags.append(tag)
-            memcache.set("lastfm topTags",tags)
-        self.response.out.write(json.dumps(tags))
-
-class xhrCreateTagPlayList(Handler):
-    def post(self):
-        logging.error("xhrCreateTagPlayList")
-        j=self.request.body
-        data=json.loads(j)
-        genre=data["data"]
-        
-        tracks=None
-        #tracks=memcache.get("create %s playlist"%genre)
-        
-        if tracks is None:
-
-            playlist=Playlist()
-            playlist.tipo="tag"
-            playlist.param=genre
-            
-            response=playlist.create()
-            logging.error(response)
-            if response =='Genre not in Echonest':
-               tracks=response
-            else:
-                tracks={"tracks":playlist.getTracks(),"session":playlist.session}
-  
-          
-           
-        self.response.out.write(json.dumps(tracks))
-
-class xhrArtistRadio(Handler):
-    def post(self):
-        logging.error("xhrCreateTagPlayList")
-        j=self.request.body
-        data=json.loads(j)
-        genre=data["data"]
-        
-        tracks=None
-  
-        
-        if tracks is None:
-
-            playlist=Playlist()
-            playlist.tipo="artist-radio"
-            playlist.param=genre
-
-            playlist.create()
-            tracks={"tracks":playlist.getTracks(),"session":playlist.session}
-  
-          
-           
-        self.response.out.write(json.dumps(tracks))
-
      
-class xhrGetNextPl(Handler):
-    def post(self):
-        j=self.request.body
-        data=json.loads(j)
-        logging.error(data)
- 
-        if "session" in data:
-            echo=Dynamic()
-            echo.session=data["session"]
-            echo.getNext()
-            track=echo.tracks.pop()
-            logging.error(track)
-            self.response.out.write(json.dumps({"tracks":[track]}))
-        else:
-            
-            pass
-
-
-             
-
-
-class xhrCreateArtistPlayList(Handler):
-    def post(self):
-        j=self.request.body
-        data=json.loads(j)
-        genre=data["data"]
-        tracks=None
-        tracks=memcache.get("create %s playlist"%genre)
-        
-        if tracks is None:
-
-            playlist=Playlist()
-            playlist.tipo="artist"
-            playlist.param=data["data"]
-
-            playlist.create()
-            tracks={"tracks":playlist.getTracks(),"session":playlist.session}
-
-        
-
-            memcache.set("create %s playlist"%genre,tracks)
-        self.response.out.write(json.dumps( tracks))
-
-
-
-class SearchArtist(Handler):
-    def post(self):
-        import artist
-        j=self.request.body
-        data=json.loads(j)
-        artist_name=data["name"]
-        logging.error(artist_name)
-        artists=artist.search_artist(artist_name)
-
-       
-        self.response.out.write(json.dumps(artists))
-        
-
-
-class xhrArtistData(Handler):
-     def post(self):
-        j=self.request.body
-        data=json.loads(j)
-        mbid=data["artist"]
-        data=None
-        key=ndb.Key("Artist",mbid)
-        a=key.get()
-        if a is None:
-            a=Artist(key=key)
-
-        data={"name":a.getName(),
-                "info":a.getInfo(),
-                "tags":a.getTags()             
-        }
-        
-        self.response.out.write(json.dumps(data))
 
 
 class BlobstoreUpload(blobstore_handlers.BlobstoreUploadHandler):
@@ -562,10 +471,10 @@ app = webapp2.WSGIApplication([('/', xhrFront),
                                ('/xhrFront', xhrFront),
                                ('/xhrLogo',xhrLogo),('/xhrSimilar', xhrSimilar),('/xhrFrontVideos', xhrFrontVideos),('/xhrGetVideo',xhrGetVideo),
                                ('/xhrArtistData',xhrArtistData),
-                               ('/xhrTagPlayList',xhrTagPlayList),('/xhrArtistPlayList',xhrArtistPlayList),('/xhrCreateTagPlayList',xhrCreateTagPlayList),('/xhrCreateArtistRadio',xhrArtistRadio),
+                               ('/xhrCreateTagPlayList',xhrCreateTagPlayList),('/xhrCreateArtistRadio',xhrArtistRadio),
                                ('/xhrGetNextPl',xhrGetNextPl),('/xhrCreateArtistPlayList',xhrCreateArtistPlayList),
                                ('/artist/([^/]+)?', Artista),('/tag/([^/]+)?', Taga),('/artist-radio/([^/]+)?',ArtistRadio),
-                               ('/predefined',xhrFront),('/correctArtist',Correct),
+                               ('/predefined',xhrFront),
                                ('/getTopArtist',getTopArtist),('/getTopTags',getTopTags),
                                ('/searchArtist',SearchArtist),
 
