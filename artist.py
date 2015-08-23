@@ -21,7 +21,7 @@ class Artist(ndb.Model):
     logo=ndb.BlobKeyProperty(required=False,indexed=False)
     info=ndb.TextProperty(required=False)
     tags=ndb.PickleProperty(required=False)
-    similars=ndb.KeyProperty(kind="Artist",required=False,repeated=True)
+    similars=[]
     image=ndb.StringProperty(required=False, indexed=False)
 
     def new(self, name=None, logo=None,info=None,tags=None,similars=[],image=None):
@@ -36,17 +36,23 @@ class Artist(ndb.Model):
         logging.error("getData")
 
         mbid=self.key.id()
-        url=tools.get_url("lastfm","artistInfo",mbid)
-        j=tools.get_json(url)
-   
-        self.info=strip_tags(j["artist"]["bio"]["content"])
-        self.name=j["artist"]["name"]
-        self.image=j["artist"]["image"][4]["#text"]
+     
+        url=tools.get_url("echonest", "artistData", mbid)
+        j2=tools.get_json(url)
+        j2=j2["response"]
+
+        for i in j2["artist"]["biographies"]:
+            if i["site"]=="last.fm":
+                self.info=i["text"]
+        
+        self.name=j2["artist"]["name"]
 
         tags=[]
-        for t in j["artist"]["tags"]["tag"]:
-            tag=t["name"]
-            tags.append(tag)
+
+        for t in j2["artist"]["genres"]:
+            tags.append(t["name"])
+     
+
         self.tags=tags
 
         self.put()
@@ -93,31 +99,36 @@ class Artist(ndb.Model):
         #similar=memcache.get("similars of %s"%mbid)
         if similars is None:
             similars=[]
-            url=tools.get_url('lastfm','similar',mbid)
+            url=tools.get_url('echonest','similars',mbid)
+            logging.error(url)
             j=tools.get_json(url)
             if j is None:
                 return []
 
             try:
-                a=j['similarartists']['artist']
+                a=j['response']['artists']
             except:
+                logging.error(j)
                 return []
             for i in a:
-                if i["mbid"]!="":
-                    try:
-      
-                        cmbid=CorrectArtist.by_id(i["mbid"])
-                        if cmbid is not None:
-                            skey=ndb.Key("Artist",cmbid.mbid)
-                        else:
-                            skey=ndb.Key("Artist",i['mbid'])
-                        similars.append(skey)
-                    except:
-                        pass
+                import random
+                random.shuffle(i["images"])
+                for x in  i["images"]:
+                    if "last.fm" in x["url"]: 
+                        image=x["url"]
+
+                if "foreign_ids" in i:
+
+                    similar={"name":i["name"],
+                            "logo":image,
+                            "mbid":i["foreign_ids"][0]["foreign_id"][19:] 
+                            }
+                    similars.append(similar)
+
             self.similars=similars
-            
-            
-            self.put()
+            logging.error(similars)
+            return similars
+           # self.put()
 
     def serveLogo(self):
         try:
@@ -134,10 +145,12 @@ class Artist(ndb.Model):
         artist={}
 
         artist["mbid"]=self.key.id()
+        
         if self.name is not None:
             artist["name"]=self.name
         else:
-            artist["name"]=d["artist"]["name"]
+            logging.error(artist)
+            artist["name"]=self.getName()
         
         if self.logo is not None:
             artist["logo"]=images.get_serving_url(self.logo)
@@ -177,8 +190,6 @@ class Artist(ndb.Model):
             url=tools.get_url('fanart','artist',mbid)
             logging.error(url)
             j=tools.get_json(url) 
-            logging.error(url)
-            logging.error(j)
             if j is None:
                 return None
 

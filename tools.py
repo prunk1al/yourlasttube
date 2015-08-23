@@ -144,7 +144,7 @@ def get_url(server,service,param):
 
         if service=="genreCreate":
             SERVICE='/api/v4/playlist/dynamic/create?'
-            params='api_key='+API_KEY+'&format=json&genre='+mbid.lower().replace(" ","%20")+'&distribution=focused&type=genre-radio&genre_preset=core-shuffled&bucket=id:musicbrainz&limited_interactivity=true'
+            params='api_key='+API_KEY+'&format=json&genre='+mbid.lower().replace(" ","%20")+'&distribution=focused&type=genre-radio&genre_preset=in_rotation-shuffled&bucket=id:musicbrainz&limited_interactivity=true'
         if service=="getNext10":
             SERVICE='/api/v4/playlist/dynamic/next?'
             params='api_key='+API_KEY+'&format=json&session_id='+mbid+'&results=20'
@@ -159,14 +159,19 @@ def get_url(server,service,param):
             params='api_key='+API_KEY+'&format=json&artist_id=musicbrainz:artist:'+mbid+'&type=artist&sort=song_hotttnesss-desc&bucket=id:musicbrainz'
         if service=="artistRadioCreate":
             SERVICE='/api/v4/playlist/dynamic/create?'
-            params='api_key='+API_KEY+'&format=json&artist_id=musicbrainz:artist:'+mbid+'&type=artist-radio&bucket=id:musicbrainz&limited_interactivity=true'
+            params='api_key='+API_KEY+'&format=json&artist_id=musicbrainz:artist:'+mbid+'&type=artist-radio&bucket=id:musicbrainz&limited_interactivity=true&distribution=focused'
         if service=="top":
             SERVICE='/api/v4/playlist/dynamic/create?'
-            params='api_key='+API_KEY+'&format=json&artist_id=musicbrainz:artist:'+mbid+'&type=artist-radio&bucket=id:musicbrainz&limited_interactivity=true'
+            params='api_key='+API_KEY+'&format=json&bucket=id:musicbrainz&limited_interactivity=true'
         if service=="similar": 
             SERVICE='/api/v4/genre/similar?'
             params='api_key='+API_KEY+'&name='+mbid+'&bucket=description'
-
+        if service=="similars":
+    		SERVICE='/api/v4/artist/similar?'
+    		params='api_key='+API_KEY+'&id=musicbrainz:artist:'+mbid+'&format=json&results=4&bucket=id:musicbrainz&bucket=images'
+    	if service=="artistData":
+    		SERVICE='/api/v4/artist/profile?'
+    		params='api_key='+API_KEY+'&id=musicbrainz:artist:'+mbid+'&bucket=id:musicbrainz&bucket=genre&bucket=biographies'
         
     elif server=="7digital":
         SERVER='api.7digital.com'

@@ -193,8 +193,7 @@ $(window).load(function() {
             <div id="ytImages">
                                 
                 <div data-bind="foreach: trackList">
-                    
-                    <img data-bind="attr: {src: img, title:name}, visible: $index() <=9, click: $parent.youtube.changeCurrentVideo " width="100px">
+                    <img data-bind="attr: {src: img, title: artistName() +' - '+ name()}, visible: $index() <=9, click: $parent.youtube.changeCurrentVideo " width="100px">
                     
                 </div>
                 </tr>

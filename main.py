@@ -132,11 +132,12 @@ class xhrSimilar(Handler):
         data=json.loads(j)
         mbid=data["artist"]
         similars=None
-        similars=memcache.get("v3 similars of %s"%mbid)
+        #similars=memcache.get("v3 similars of %s"%mbid)
         if similars is None:
 
             artist=ndb.Key("Artist",mbid)
             similars=getSimilar(artist)
+            logging.error(similars)
             memcache.set("v3 similars of %s"%mbid, similars)
         self.response.out.write(json.dumps(similars))
 @ndb.transactional(xg=True) 
@@ -144,21 +145,12 @@ def getSimilar(key):
     artist=key.get()
     if artist is None:
         artist=Artist(key=key)
-    similars=[]
-    for s in artist.getSimilars():
-        similar=sjson(s)
-        similars.append(similar)
-    return similars
-@ndb.non_transactional(allow_existing=True)    
-def sjson(s):
-    sim=s.get()
-    if sim is None:
-        sim=Artist(key=s)
-    similar={"name":sim.getName(),
-             "logo":sim.getImage(),
-             "mbid":sim.key.id()
-            }
-    return similar    
+        return artist.getSimilars()
+  
+    else:
+        similars=[]
+        for a in artist.similars:
+            print a.getName()
 
 class getTopArtist(Handler):
     def get(self):
@@ -464,7 +456,13 @@ class Sitemap(Handler):
         self.render_site(artists=artists)
             
 
-
+class login(Handler):
+    def post(self):
+        j=self.request.body
+        data=json.loads(j)
+        logging.error(data)
+ 
+       
 
 app = webapp2.WSGIApplication([('/', xhrFront),
                                ('/sitemaps.xml',Sitemap),
@@ -481,3 +479,6 @@ app = webapp2.WSGIApplication([('/', xhrFront),
                                ('/uploadblob',BlobstoreUpload)
 
                                ], debug=True)
+
+
+import User

@@ -4,7 +4,9 @@ var Track=function(data){
     this.name = ko.observable(data.name);
     this.artist= ko.observable(data.artist);
     this.ytid=ko.observable("");
-    
+    this.artistName=ko.computed(function(){
+        return self.artist().name()
+    })
     
     this.img= ko.computed(function(){
     	return "http://img.youtube.com/vi/"+self.ytid()+"/0.jpg"
@@ -144,12 +146,13 @@ var Artist=function(data){
     }
 
     this.getAsyncData=function(){
-        $.post('/xhrArtistData', JSON.stringify({"artist":self.mbid()}),function(data){
+        var test= $.post('/xhrArtistData', JSON.stringify({"artist":self.mbid()}),function(data){
             var data=JSON.parse(data);
             self.updateData(data)
 
             localStorage.setItem(self.mbid()+"Data",JSON.stringify(data));
         })
+        localStorage.setItem("pruebas",test)
     }
 
     this.getAsyncLogo=function(){
@@ -188,7 +191,7 @@ var Artist=function(data){
         return self.similars()
     };
 
-   this.init()
+
 };
 
 
@@ -325,14 +328,22 @@ var viewModel=function(){
             );
         }
 
-               
+        var hasplayed=false;       
 
         this.youtube={
+            
+
             nextVideo:function(event){
+                if (event.data===1 && !hasplayed){
+                    console.log("playing")
+                    hasplayed=true;
+                };
                 if (event.data===0){
+                    hasplayed=false;
                     self.youtube.changeCurrentVideo(self.trackList()[0])
                     self.getNextTrack()
-                }
+                    
+                };
             },
 
             changeCurrentVideo:function(video){
@@ -340,11 +351,14 @@ var viewModel=function(){
                 window.player.loadVideoById(video.ytid(), 0,"large");
                 self.getNextTrack()
                 self.currentVideo(video)
+                video.artist().init();
                 
             },
 
             loadplayer:function(){
                 self.currentVideo(self.trackList()[0]);
+                self.currentVideo().artist().init();
+                console.log(self.currentVideo())
                 self.trackList.splice(self.trackList.indexOf(self.currentVideo()),1);
                     window.player = new YT.Player( "player", {
                         height: 320,
