@@ -1,3 +1,4 @@
+var hasplayed=false;       
 
 var Track=function(data){
     var self=this;
@@ -21,7 +22,7 @@ var Track=function(data){
         var data=localStorage.getItem(self.name()+"-" +self.artist().name());
         if(data){ 
             console.log("loaded from local video")       
-            data=JSON.parse(data)
+            var data=JSON.parse(data)
             self.updateVideo(data)
         }
         else{
@@ -35,8 +36,8 @@ var Track=function(data){
 
      $.post('/xhrGetVideo',JSON.stringify({name: self.name(), 
                                           artist: {name:self.artist().name()}}),function(data){
-                        data=JSON.parse(data);
-                        ytid=data.ytid
+                        var data=JSON.parse(data);
+                        var ytid=data.ytid
                         //localStorage.setItem(self.name()+"-"+ self.artist().name(), JSON.stringify(ytid))
                         //self.updateVideo(ytid);
                         self.ytid(ytid)
@@ -90,7 +91,7 @@ var Artist=function(data){
         var data=localStorage.getItem(self.mbid()+"Data");
         if(data){
         
-            data=JSON.parse(data)
+            var data=JSON.parse(data)
             self.updateData(data)
         }
         else{
@@ -105,7 +106,7 @@ var Artist=function(data){
         var data=localStorage.getItem(self.mbid()+"Logo");
         if(data){
             console.log("loaded from local logo")
-            data=JSON.parse(data)
+            var data=JSON.parse(data)
             console.log(data)
             self.updateLogo(data)
         }
@@ -120,7 +121,7 @@ var Artist=function(data){
         var data=localStorage.getItem(self.mbid()+"Similars");
         if(data){
             console.log("loaded from local similars")
-            data=JSON.parse(data)
+            var data=JSON.parse(data)
             self.updateSimilars(data)
         }
         else{
@@ -259,7 +260,7 @@ var viewModel=function(){
                 var param=url[4];
                 if (type==="artist"){
                     $.post("/xhrCreateArtistPlayList",JSON.stringify({data:param}),function(data){
-                        data=JSON.parse(data);
+                        var data=JSON.parse(data);
                         self.session(data.session)
                         for (i in data.tracks){
                            self.addTrack(data.tracks[i])
@@ -269,7 +270,7 @@ var viewModel=function(){
                 else{
                     if (type==="tag"){
                         $.post("/xhrCreateTagPlayList",JSON.stringify({data:param}),function(data){
-                            data=JSON.parse(data);
+                            var data=JSON.parse(data);
 
                             if (data==='Genre not in Echonest'){
                                 $.magnificPopup.open({
@@ -289,7 +290,7 @@ var viewModel=function(){
                     else{
                         if (type==="artist-radio"){
                             $.post("/xhrCreateArtistRadio",JSON.stringify({data:param}),function(data){
-                                data=JSON.parse(data);
+                                var data=JSON.parse(data);
                                 self.session(data.session)
                                 for (i in data.tracks){
                                     self.addTrack(data.tracks[i])
@@ -300,12 +301,25 @@ var viewModel=function(){
                 }
             }
             else{
-                $.getJSON("/xhrFrontVideos", function(data) { 
+                //$.getJSON("/xhrFrontVideos", function(data) { 
+                $.get("https://test-prunk1al.c9.io/",function(data) { 
+                    console.log(data)
                     for (i in data){
                         self.addTrack(data[i])
                     }
                 });
-            };
+                
+                /*$.ajax({
+            crossDomain: true,
+            type:"GET",
+            contentType: "application/json; charset=utf-8",
+            async:false,
+            url: "https://test-prunk1al.c9.io/",
+            dataType: "jsonp",                
+            success: function(data){console.log(data)}
+            });*/
+            }
+
 
 
 
@@ -317,7 +331,7 @@ var viewModel=function(){
                 "session":self.session()
             }
             $.post("/xhrGetNextPl",JSON.stringify(query),function(data){
-                    data=JSON.parse(data);
+                    var data=JSON.parse(data);
                     var artist=new Artist(data.tracks[0].artist);
                         data.tracks[0].artist=artist;
                             
@@ -328,18 +342,21 @@ var viewModel=function(){
             );
         }
 
-        var hasplayed=false;       
 
         this.youtube={
             
 
             nextVideo:function(event){
-                if (event.data===1 && !hasplayed){
+                if (event.data===1){
                     console.log("playing")
                     hasplayed=true;
+                    console.log(self.currentVideo())
+                    var id=self.currentVideo().artistName() +'-'+ self.currentVideo().name();
+                    var data={name: self.currentVideo().name() , artist:{name:self.currentVideo().artistName(), mbid:self.currentVideo().artist().mbid()}}
+                    $.post("https://test-prunk1al.c9.io",{data});
                 };
                 if (event.data===0){
-                    hasplayed=false;
+                    //hasplayed=false;
                     self.youtube.changeCurrentVideo(self.trackList()[0])
                     self.getNextTrack()
                     
@@ -347,6 +364,7 @@ var viewModel=function(){
             },
 
             changeCurrentVideo:function(video){
+                hasplayed=false;
                 self.trackList.splice(self.trackList.indexOf(video),1);
                 window.player.loadVideoById(video.ytid(), 0,"large");
                 self.getNextTrack()

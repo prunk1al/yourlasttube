@@ -240,7 +240,7 @@ class xhrCreateArtistPlayList(Handler):
         data=json.loads(j)
         genre=data["data"]
         tracks=None
-        tracks=memcache.get("create %s playlist"%genre)
+        #tracks=memcache.get("create %s playlist"%genre)
         
         if tracks is None:
 
