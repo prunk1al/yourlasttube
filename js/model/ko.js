@@ -34,8 +34,10 @@ var Track=function(data){
 
     };
 
+     var typelist=$("#flip-1").val();
+
      $.post('/xhrGetVideo',JSON.stringify({name: self.name(), 
-                                          artist: {name:self.artist().name()}}),function(data){
+                                          artist: {name:self.artist().name()}, type:typelist}),function(data){
                         var data=JSON.parse(data);
                         var ytid=data.ytid
                         //localStorage.setItem(self.name()+"-"+ self.artist().name(), JSON.stringify(ytid))

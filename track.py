@@ -19,12 +19,12 @@ class Track(ndb.Model):
 
     def getVideo(self):
         logging.error(self)
-        name, artist=self.key.id().split(' - ')
-
-        data=memcache.get("%s,%s"%(artist,name))
+        name, artist, tipe=self.key.id().split(' - ')
+        logging.error("%s,%s,%s"%(artist,name, tipe))
+        data=memcache.get("%s,%s,%s"%(artist,name, tipe))
 
         if data is None:
-            key=ndb.Key('Track',name+ ' - ' + artist)
+            key=ndb.Key('Track',name+ ' - ' + artist+" "+ tipe)
             data=key.get()
 
         if data is None:
@@ -38,7 +38,7 @@ class Track(ndb.Model):
                     data=v[0].video
                 else:
                     
-                    url=tools.get_url('youtube','video',[artist,name])
+                    url=tools.get_url('youtube','video',[artist,name, tipe])
                     logging.error(url)
                     j=tools.getjson(url)
                     

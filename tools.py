@@ -87,7 +87,9 @@ def get_url(server,service,param):
             params=params.replace(" ","+")   
 
     elif server=='youtube':
-        artist,song=param[0],param[1]
+        artist,song, tipe=param[0],param[1], param[2]
+        if tipe=="Studio": tipe=""
+
         API_KEY=YOUTUBE_API
         """SERVER='gdata.youtube.com'
         SERVICE='/feeds/api/videos?q='
@@ -96,7 +98,7 @@ def get_url(server,service,param):
         
         SERVER='www.googleapis.com/youtube/'
         SERVICE='v3/search'
-        params='?part=id&q='+artist+'+'+song+' &key='+API_KEY+"&type=video&videoEmbeddable=true&maxResults=1&safeSearch=moderate"
+        params='?part=id&q='+artist+'+'+song+' '+tipe+'&key='+API_KEY+"&type=video&videoEmbeddable=true&maxResults=1&safeSearch=moderate"
         params=params.replace(" ","+")
 
 

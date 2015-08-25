@@ -56,11 +56,12 @@ class xhrGetVideo(Handler):
     
         j=self.request.body
         data=json.loads(j)
-        video=None
+        track=None
         logging.error(data)
         video=memcache.get("video of %s %s"%(data["name"],data["artist"]["name"]))
-        trackKey=ndb.Key('Track',data["name"].replace("-", "")+ " - " +data["artist"]["name"] )
+        trackKey=ndb.Key('Track',data["name"].replace("-", "")+ " - " +data["artist"]["name"]+" - "+data["type"] )
         track=trackKey.get()
+        
         if track is None:
             track=Track(key=trackKey)
             track.getVideo()

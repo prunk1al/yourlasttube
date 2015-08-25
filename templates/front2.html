@@ -197,6 +197,12 @@ $(window).load(function() {
                     <img data-bind="attr: {src: img, title: artistName() +' - '+ name()}, visible: $index() <=9, click: $parent.youtube.changeCurrentVideo " width="100px"  height="75px">
                     
                 </div>
+                <div id="type">
+                        <select id="flip-1" name="flip-1" data-role="slider" value="Live">
+                            <option value="Live">Live</option>
+                            <option value="Studio">Studio</option>
+                        </select>
+                </div>
                 
                 
             </div>
@@ -266,6 +272,7 @@ $(window).load(function() {
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.3.0/knockout-min.js"></script>
     <script src="/js/knockout-jqueryui.min.js"></script>
+    <script type="text/javascript" src="/js/helper.js"></script>
 
     <script type="text/javascript" src="/js/model/ko.js"></script>
 
