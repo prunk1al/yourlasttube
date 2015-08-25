@@ -96,7 +96,7 @@ def get_url(server,service,param):
         
         SERVER='www.googleapis.com/youtube/'
         SERVICE='v3/search'
-        params='?part=id&q='+artist+'+'+song+' live&key='+API_KEY+"&type=video&videoEmbeddable=true&maxResults=1&safeSearch=moderate"
+        params='?part=id&q='+artist+'+'+song+' &key='+API_KEY+"&type=video&videoEmbeddable=true&maxResults=1&safeSearch=moderate"
         params=params.replace(" ","+")
 
 

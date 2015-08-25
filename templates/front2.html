@@ -192,12 +192,13 @@ $(window).load(function() {
 
             <div id="ytImages">
                                 
-                <div data-bind="foreach: trackList">
-                    <img data-bind="attr: {src: img, title: artistName() +' - '+ name()}, visible: $index() <=9, click: $parent.youtube.changeCurrentVideo " width="100px">
+                <div data-bind="foreach: trackList, sortable:trackList">
+
+                    <img data-bind="attr: {src: img, title: artistName() +' - '+ name()}, visible: $index() <=9, click: $parent.youtube.changeCurrentVideo " width="100px"  height="75px">
                     
                 </div>
-                </tr>
-                </table>
+                
+                
             </div>
             
             <div id="player" data-bind="player: { id: currentVideo, height: '320', width: '598' }"></div>
@@ -265,6 +266,7 @@ $(window).load(function() {
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.3.0/knockout-min.js"></script>
     <script src="/js/knockout-jqueryui.min.js"></script>
+
     <script type="text/javascript" src="/js/model/ko.js"></script>
 
 
