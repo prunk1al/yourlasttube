@@ -34,7 +34,11 @@ var Track=function(data){
 
     };
 
+
+
+     this.getAsyncVideo=function(){
      var typelist=$("#flip-1").val();
+
 
      $.post('/xhrGetVideo',JSON.stringify({name: self.name(), 
                                           artist: {name:self.artist().name()}, type:typelist}),function(data){
@@ -45,6 +49,7 @@ var Track=function(data){
                         self.ytid(ytid)
 
             });
+    }
 
 /*
     this.updateVideo=function(data){
@@ -54,9 +59,9 @@ var Track=function(data){
     this.getAsyncVideo=function(){
             
     }
-
-    this.init()
 */
+    this.init()
+
 }
 
 var Artist=function(data){
@@ -71,15 +76,6 @@ var Artist=function(data){
 
     this.isOpen = ko.observable(false);
     this.text = ko.computed(function(){return self.info()})
-    //this.width=ko.observable();
-
-     this.popupInfo=function(){
-         this.isOpen(true);  
-      //   this.width(400);
-        }
-
-
-
 
     this.init=function(){
         this.initData();
@@ -138,6 +134,7 @@ var Artist=function(data){
         self.info(data["info"]);
         self.name(data["name"]);
         self.tags(data["tags"]);
+        
     };
 
     this.updateLogo=function(logo){
@@ -194,6 +191,15 @@ var Artist=function(data){
         return self.similars()
     };
 
+    this.popup=function(){
+        $.magnificPopup.open({
+                    items: {
+                        src: '<div class="white-popup"><p>'+self.info()+'</p></div>', // can be a HTML string, jQuery object, or CSS selector
+                        type: 'inline'
+                    }
+                });
+    };
+
 
 };
 
@@ -216,7 +222,9 @@ var viewModel=function(){
             self.setPlayList();
         };
 
-       
+       this.sendMensaje=function(value){
+            console.log(value)
+       }
 
         this.topMenu=function(){
 
@@ -427,7 +435,14 @@ var viewModel=function(){
     }
 
 
-
+this.changeType=function(){
+    console.log($("#flip-1").val())
+    localStorage.setItem("yourlastube-typelist",$("#flip-1").val())
+    //self.currentVideo().getAsyncVideo();
+    for (i in self.trackList()){
+        self.trackList()[i].getAsyncVideo();
+    }
+}
 
 
 
@@ -487,20 +502,7 @@ ko.bindingHandlers['player'] = {
     }
 
 
-ko.bindingHandlers.accordion = {
-    init: function(element, valueAccessor) {
-        var options = valueAccessor() || {};
-        setTimeout(function() {
-            $(element).accordion(options);
-        }, 0);
-        
-        //handle disposal (if KO removes by the template binding)
-          ko.utils.domNodeDisposal.addDisposeCallback(element, function(){
-              $(element).accordion("destroy");
-          });
-    },
 
-}    
 
 
 ko.bindingHandlers.sortable = {
@@ -546,9 +548,6 @@ ko.bindingHandlers.sortable = {
         $(element).sortable( sortableSetup );  
     }
 };
-
-
-
 
 
 

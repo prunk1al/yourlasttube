@@ -47,7 +47,7 @@ class Track(ndb.Model):
                     data=self
                     self.put()
 
-                    memcache.set("%s,%s"%(artist,name),self.ytid)
+                    memcache.set("%s,%s, %s"%(artist,name, tipe),self.ytid)
 
         try:
             self.ytid=data.ytid

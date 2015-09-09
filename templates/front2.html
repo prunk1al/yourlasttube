@@ -171,10 +171,8 @@ $(window).load(function() {
                   
                    <div data-bind='with: currentVideo'>
                         <div data-bind="with: artist">
-                            <h3 data-bind="click: popupInfo, disable: isOpen">Artist Data</h3>
-                            <div  data-bind="dialog: { isOpen: isOpen, width: 400 }">
-                                <p data-bind="text: info, visible:true"}></p> 
-                            </div>
+                            <h3 data-bind="click: popup">Artist Data</h3>
+                            
                             <h3>Tags Playlists</h3>
                              <div data-bind="foreach: tags, " >
                                 <a data-bind="attr:{href: '/tag/'+ $data}, text: $data"> </a>
@@ -182,7 +180,9 @@ $(window).load(function() {
 
                             <h3>Artist Radio</h3>
                                 <a data-bind="attr:{href: '/artist-radio/'+ mbid()}, text: name"></a>
-                        </div>
+                                <h3>Spotify</h3>
+                                    <input type="text" data-bind="value:sendMessageText, valueUpdate: 'afterkeydown', enterkey: sendMessage"  /> 
+                       </div>
                     </div>
                     
         </div>
@@ -197,11 +197,12 @@ $(window).load(function() {
                     <img data-bind="attr: {src: img, title: artistName() +' - '+ name()}, visible: $index() <=9, click: $parent.youtube.changeCurrentVideo " width="100px"  height="75px">
                     
                 </div>
-                <div id="type">
-                        <select id="flip-1" name="flip-1" data-role="slider" value="Live">
+                <div id="type" for="flip-1">
+                        <select id="flip-1" name="flip-1" data-role="slider" data-bind="{event:{change:changeType}}" value="Live">
                             <option value="Live">Live</option>
                             <option value="Studio">Studio</option>
                         </select>
+                                           
                 </div>
                 
                 
@@ -271,7 +272,6 @@ $(window).load(function() {
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.3.0/knockout-min.js"></script>
-    <script src="/js/knockout-jqueryui.min.js"></script>
     <script type="text/javascript" src="/js/helper.js"></script>
 
     <script type="text/javascript" src="/js/model/ko.js"></script>
