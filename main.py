@@ -283,7 +283,7 @@ class xhrGetNextPl(Handler):
         data=json.loads(j)
         logging.error(data)
  
-        if "session" in data:
+        """if "session" in data:
             echo=Dynamic()
             echo.session=data["session"]
             echo.getNext()
@@ -293,6 +293,44 @@ class xhrGetNextPl(Handler):
         else:
             
             pass
+        """
+        j=self.request.body
+        data=json.loads(j)
+        logging.error(data)
+        if data["type"]=="artist":
+            action="artistNext"
+        elif data["type"]=="tag":
+            action="genreNext"
+
+        url=tools.get_url("lastfm",action,data)
+        logging.error(url)
+        result = urlfetch.fetch(url)      
+        page=urllib2.urlopen(url)
+        p=page.read()
+        j=json.loads(p)
+
+
+        tracks=[]
+        d=j["toptracks"]["track"]
+        
+        track={}
+        track["artist"]={}
+        track["artist"]["name"]=d["artist"]["name"]
+        mbid=d["artist"]["mbid"]
+        cmbid=CorrectArtist.by_id(mbid)
+        if cmbid is not None:
+            track["artist"]["mbid"]=cmbid.mbid
+        else:
+            track["artist"]["mbid"]=mbid
+        track["name"]=d["name"]
+
+        tracks.append(track)
+
+        data={"tracks":tracks}
+
+
+        data={"tracks":tracks}
+        self.response.out.write(json.dumps(tracks))
 
 
         

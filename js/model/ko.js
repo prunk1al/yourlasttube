@@ -1,4 +1,5 @@
-var hasplayed=false;       
+var hasplayed=false;
+
 
 var Track=function(data){
     var self=this;
@@ -8,7 +9,7 @@ var Track=function(data){
     this.artistName=ko.computed(function(){
         return self.artist().name()
     })
-    
+
     this.img= ko.computed(function(){
     	return "http://img.youtube.com/vi/"+self.ytid()+"/0.jpg"
     },this);
@@ -20,8 +21,8 @@ var Track=function(data){
 
     this.initVideos=function(){
         var data=localStorage.getItem(self.name()+"-" +self.artist().name());
-        if(data){ 
-            console.log("loaded from local video")       
+        if(data){
+            console.log("loaded from local video")
             var data=JSON.parse(data)
             self.updateVideo(data)
         }
@@ -36,11 +37,12 @@ var Track=function(data){
 
 
 
+
      this.getAsyncVideo=function(){
      var typelist=$("#flip-1").val();
 
 
-     $.post('/xhrGetVideo',JSON.stringify({name: self.name(), 
+     $.post('/xhrGetVideo',JSON.stringify({name: self.name(),
                                           artist: {name:self.artist().name()}, type:typelist}),function(data){
                         var data=JSON.parse(data);
                         var ytid=data.ytid
@@ -57,7 +59,7 @@ var Track=function(data){
     }
 
     this.getAsyncVideo=function(){
-            
+
     }
 */
     this.init()
@@ -83,20 +85,20 @@ var Artist=function(data){
         this.initSimilars();
     };
 
-    
+
 
     this.initData=function(){
         var data=localStorage.getItem(self.mbid()+"Data");
         if(data){
-        
+
             var data=JSON.parse(data)
             self.updateData(data)
         }
         else{
-        
+
             self.getAsyncData()
         }
-    
+
     };
 
 
@@ -112,7 +114,7 @@ var Artist=function(data){
             console.log("loaded from webservice logo")
             self.getAsyncLogo()
         }
-    
+
     };
 
      this.initSimilars=function(){
@@ -126,7 +128,7 @@ var Artist=function(data){
             console.log("loaded from webservice similars")
             self.getAsyncSimilars()
         }
-    
+
     };
 
 
@@ -134,7 +136,7 @@ var Artist=function(data){
         self.info(data["info"]);
         self.name(data["name"]);
         self.tags(data["tags"]);
-        
+
     };
 
     this.updateLogo=function(logo){
@@ -165,7 +167,7 @@ var Artist=function(data){
                 localStorage.setItem(self.mbid()+"Logo",JSON.stringify(data));
             }
             $("#loadingLogo").hide();
-            
+
         })
 
    }
@@ -180,13 +182,13 @@ var Artist=function(data){
    }
 
     this.loadLogo=function(){
-        
+
         self.initLogo();
         return self.logo()
     };
 
     this.loadSimilars=function(){
-        
+
         self.initSimilars();
         return self.similars()
     };
@@ -213,7 +215,7 @@ var viewModel=function(){
         this.topArtist=ko.observableArray();
         this.topTags=ko.observableArray();
         this.session=ko.observable();
-       
+
 
 
 
@@ -228,19 +230,19 @@ var viewModel=function(){
 
         this.topMenu=function(){
 
-            //this.getTopArtist=function(){$.getJSON("/getTopArtist", function(data) { 
-            this.getTopArtist=function(){$.getJSON("https://test-prunk1al.c9.io/data", function(data) { 
-            
-                // Now use this data to update your view models, 
-                // and Knockout will update your UI automatically 
+            //this.getTopArtist=function(){$.getJSON("/getTopArtist", function(data) {
+            this.getTopArtist=function(){$.getJSON("https://test-prunk1al.c9.io/data", function(data) {
+
+                // Now use this data to update your view models,
+                // and Knockout will update your UI automatically
                 for (i in data){
                     self.topArtist.push(data[i]._id)
                 }
             })};
 
-            this.getTopTags=function(){$.getJSON("/getTopTags", function(data) { 
-                // Now use this data to update your view models, 
-                // and Knockout will update your UI automatically 
+            this.getTopTags=function(){$.getJSON("/getTopTags", function(data) {
+                // Now use this data to update your view models,
+                // and Knockout will update your UI automatically
                 for (i in data){
                     self.topTags.push(data[i])
                 }
@@ -258,7 +260,7 @@ var viewModel=function(){
         this.addTrack=function(track){
              var artist=new Artist(track.artist);
                 track.artist=artist;
-                           
+
             var track=new Track(track);
                 self.trackList.push(track);
         }
@@ -313,8 +315,8 @@ var viewModel=function(){
                 }
             }
             else{
-                //$.getJSON("/xhrFrontVideos", function(data) { 
-                $.get("https://test-prunk1al.c9.io/",function(data) { 
+                //$.getJSON("/xhrFrontVideos", function(data) {
+                $.get("https://test-prunk1al.c9.io/",function(data) {
                     console.log(data)
                     for (i in data){
                         self.addTrack(data[i])
@@ -325,7 +327,7 @@ var viewModel=function(){
 
 
 
-            
+
         };
 
         this.getNextTrack=function(){
@@ -336,7 +338,7 @@ var viewModel=function(){
                     var data=JSON.parse(data);
                     var artist=new Artist(data.tracks[0].artist);
                         data.tracks[0].artist=artist;
-                            
+
                     var track=new Track(data.tracks[0]);
                         self.trackList.push(track);
 
@@ -346,7 +348,7 @@ var viewModel=function(){
 
 
         this.youtube={
-            
+
 
             nextVideo:function(event){
                 if (event.data===1){
@@ -361,7 +363,7 @@ var viewModel=function(){
                     //hasplayed=false;
                     self.youtube.changeCurrentVideo(self.trackList()[0])
                     self.getNextTrack()
-                    
+
                 };
             },
 
@@ -372,7 +374,7 @@ var viewModel=function(){
                 self.getNextTrack()
                 self.currentVideo(video)
                 video.artist().init();
-                
+
             },
 
             loadplayer:function(){
@@ -465,7 +467,7 @@ ko.bindingHandlers['player'] = {
                 window.playerReady = ko.observable(false);
                 window.onYouTubeIframeAPIReady = function() {
                     window.playerReady(true);
-                    
+
                      if ( viewModel.trackList().length===0 ) {
                         // YT hasn't invoked global callback.  Subscribe to update
                         var subscription;
@@ -498,7 +500,7 @@ ko.bindingHandlers['player'] = {
                 };
             }
         }
-        
+
     }
 
 
@@ -510,29 +512,29 @@ ko.bindingHandlers.sortable = {
         // cached vars for sorting events
         var startIndex = -1,
             koArray = valueAccessor();
-        
+
         var sortableSetup = {
             // cache the item index when the dragging starts
             start: function (event, ui) {
                 startIndex = ui.item.index();
-                
+
                 // set the height of the placeholder when sorting
                 ui.placeholder.height(ui.item.height());
             },
             // capture the item index at end of the dragging
             // then move the item
             stop: function (event, ui) {
-                
+
                 // get the new location item index
                 var newIndex = ui.item.index();
-                
+
                 if (startIndex > -1) {
                     //  get the item to be moved
                     var item = koArray()[startIndex];
-                     
+
                     //  remove the item
                     koArray.remove(item);
-                    
+
                     //  insert the item back in to the list
                     koArray.splice(newIndex, 0, item);
 
@@ -543,9 +545,9 @@ ko.bindingHandlers.sortable = {
             },
             placeholder: 'fruitMoving'
         };
-        
+
         // bind
-        $(element).sortable( sortableSetup );  
+        $(element).sortable( sortableSetup );
     }
 };
 
